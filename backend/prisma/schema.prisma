@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- ENUMS ---
+
+enum TipoFuncionario {
+  func
+  port
+  sup
+  ger
+  adm
+}
+
+enum StatusCracha {
+  perdido
+  emUso
+  disponivel
+}
+
+enum StatusRequisicao {
+  pendente
+  aprovado
+  recusado
+}
+
+// --- TABELAS ---
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  nome          String   @db.VarChar(150)
+  cpf           String   @unique @db.VarChar(14)
+  celular       String?  @db.VarChar(20)
+  email         String   @unique @db.VarChar(150)
+  dataDeCriacao DateTime @default(now())
+
+  // Relações
+  funcionarios         Funcionario[]
+  tags                 Tag[]
+  requisicoesDeAcessos RequisicaoDeAcesso[]
+  requisicoesDeVisitas RequisicaoDeVisita[]
+  logs                 Log[]
+
+  @@map("usuarios")
+}
+
+model Departamento {
+  id            Int      @id @default(autoincrement())
+  nome          String   @unique @db.VarChar(100)
+  idGestor      Int?
+  dataDeCriacao DateTime @default(now())
+
+  // Relações
+  gestor               Funcionario?         @relation("GestorDepartamento", fields: [idGestor], references: [id])
+  funcionarios         Funcionario[]        @relation("FuncionarioDepartamento")
+  dispositivos         Dispositivo[]
+  requisicoesDeAcessos RequisicaoDeAcesso[]
+  requisicoesDeVisitas RequisicaoDeVisita[]
+
+  @@map("departamentos")
+}
+
+model Funcionario {
+  id               Int             @id @default(autoincrement())
+  idUsuario        Int
+  idDepartamento   Int
+  tipo             TipoFuncionario @default(func)
+  dataDeNascimento DateTime?       @db.Date
+  imagem           String?         @db.VarChar(255)
+  senhaHash        String          @db.VarChar(255)
+  dataDeCriacao    DateTime        @default(now())
+
+  // Relações
+  usuario      Usuario      @relation(fields: [idUsuario], references: [id])
+  departamento Departamento @relation("FuncionarioDepartamento", fields: [idDepartamento], references: [id])
+  gestao       Departamento[] @relation("GestorDepartamento")
+
+  @@map("funcionarios")
+}
+
+model Cracha {
+  id     Int          @id @default(autoincrement())
+  status StatusCracha @default(disponivel)
+  tags   Tag[]
+
+  @@map("crachas")
+}
+
+model Tag {
+  id            Int      @id @default(autoincrement())
+  idUsuario     Int
+  idCracha      Int
+  codigoTag     String   @unique @db.VarChar(100)
+  temporario    Boolean  @default(false)
+  validade      DateTime?
+  dataDeCriacao DateTime @default(now())
+
+  // Relações
+  usuario Usuario @relation(fields: [idUsuario], references: [id])
+  cracha  Cracha  @relation(fields: [idCracha], references: [id])
+
+  @@map("tags")
+}
+
+model RequisicaoDeAcesso {
+  id               Int              @id @default(autoincrement())
+  idUsuario        Int
+  idDepartamento   Int
+  status           StatusRequisicao @default(pendente)
+  dataDaRequisicao DateTime         @default(now())
+
+  // Relações
+  usuario      Usuario      @relation(fields: [idUsuario], references: [id])
+  departamento Departamento @relation(fields: [idDepartamento], references: [id])
+
+  @@map("requisicoes_de_acessos")
+}
+
+model Dispositivo {
+  id             Int      @id @default(autoincrement())
+  idDepartamento Int
+  local          String?  @db.VarChar(150)
+  dataManutencao DateTime?
+  dataDeCriacao  DateTime @default(now())
+
+  // Relações
+  departamento Departamento @relation(fields: [idDepartamento], references: [id])
+  logs         Log[]
+
+  @@map("dispositivos")
+}
+
+model RequisicaoDeVisita {
+  id               Int              @id @default(autoincrement())
+  idUsuario        Int
+  idDepartamento   Int
+  status           StatusRequisicao @default(pendente)
+  motivo           String?          @db.VarChar(255)
+  validade         DateTime?
+  dataDaRequisicao DateTime         @default(now())
+
+  // Relações
+  usuario      Usuario      @relation(fields: [idUsuario], references: [id])
+  departamento Departamento @relation(fields: [idDepartamento], references: [id])
+
+  @@map("requisicoes_de_visitas")
+}
+
+model Log {
+  id            Int       @id @default(autoincrement())
+  idDispositivo Int
+  idUsuario     Int
+  dataDeEntrada DateTime?
+  dataDeSaida   DateTime?
+
+  // Relações
+  dispositivo Dispositivo @relation(fields: [idDispositivo], references: [id])
+  usuario     Usuario     @relation(fields: [idUsuario], references: [id])
+
+  @@map("logs")
+}
