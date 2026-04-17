@@ -29,8 +29,9 @@ app.use('/dep', DepRouter);
 app.use('/cracha', CrachaRouter);
 
 
-
-
+app.get("/health", (req, res) => {
+    res.status(200).json({ ok: true });
+});
 
 // inicializações do server//
 
