@@ -4,8 +4,8 @@ import cors from "cors";
 
 const app = express();
 app.use(cors({
-    origin: 'https://get-in-ilp5.onrender.com',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'options'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
