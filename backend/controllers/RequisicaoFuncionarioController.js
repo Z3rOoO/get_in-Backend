@@ -1,4 +1,5 @@
-import { Create, Update, Delete, Read } from "../config/database";
+import { Create, Update, Delete, Read } from "../config/database.js";
+import { prisma } from '../config/prisma.js';
 
 class RequisicaoFuncionarioController {
     static async Create(req, res) {
@@ -19,7 +20,7 @@ class RequisicaoFuncionarioController {
             return res.status(201).json({
                 sucesso: true,
                 mensagem: "Requisição feita com sucesso",
-                dado: { id: result.insertId, ...result }
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -42,7 +43,7 @@ class RequisicaoFuncionarioController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Requisições listadas com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -70,7 +71,7 @@ class RequisicaoFuncionarioController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Requisição lida com sucesso",
-                dados: result
+                data: result
             })
         }
         catch (e) {
@@ -100,7 +101,7 @@ class RequisicaoFuncionarioController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Requisições lidas com sucesso",
-                dados: result
+                data: result
             })
         }
         catch (e) {
@@ -130,7 +131,7 @@ class RequisicaoFuncionarioController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Status da requisição atualizado",
-                dados: result
+                data: result
             })
         }
         catch (e) {
@@ -154,7 +155,7 @@ class RequisicaoFuncionarioController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Requisição deletada com sucesso",
-                dados: result
+                data: result
             })
         }
         catch (e) {

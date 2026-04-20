@@ -98,7 +98,7 @@ class DepartamentoController {
             res.status(200).json({
                 sucesso: true,
                 mensagem: "Departamento lido com sucesso",
-                dados: departamento
+                data: departamento
             })
 
         }

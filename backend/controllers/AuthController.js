@@ -58,7 +58,7 @@ class AuthController {
                 token,
                 sucesso: true,
                 mensagem: "login bem-sucedido",
-                dados: user
+                data: user
             })
 
         } catch (e) {
@@ -145,8 +145,7 @@ class AuthController {
                 return res.status(201).json({
                     sucesso: true,
                     mensagem: "Usuário e funcionário criados com sucesso",
-                    dados: { id: idUsuario, ...datauser },
-                    dado2: { id: resultfunc.id, ...newFunc }
+                    data: { usuario: { id: idUsuario, ...datauser }, funcionario: { id: resultfunc.id, ...newFunc } }
                 });
 
             } catch (e) {

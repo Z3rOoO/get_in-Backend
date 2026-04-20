@@ -1,4 +1,5 @@
-import { Create, Read, Update, Delete } from "../config/database";
+import { Create, Read, Update, Delete } from "../config/database.js";
+import { prisma } from '../config/prisma.js';
 
 class TagsController {
     static async Read(req, res) {
@@ -7,7 +8,7 @@ class TagsController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Tags lidas com sucesso",
-                dados: tags
+                data: tags
             })
         } catch (e) {
             return res.status(500).json({
@@ -33,10 +34,10 @@ class TagsController {
             const result = await prisma.tag.create({
                 data: newTag
             }) // cria uma nova tag na tabela "tags"
-            return res.status(200).json({
+            return res.status(201).json({
                 sucesso: true,
                 mensagem: "Tag criado com sucesso",
-                dados: { id: result.insertId, ...newTag } // retorna o ID da nova tag junto com os dados fornecidos
+                data: result
             })
 
         } catch (e) {
@@ -70,7 +71,7 @@ class TagsController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Tag atualizado com sucesso",
-                dados: { id, ...updatedTag } // retorna o ID da tag atualizada junto com os dados fornecidos
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -115,7 +116,7 @@ class TagsController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Tag lida com sucesso",
-                dados: tag 
+                data: tag 
             })
         } catch (e) {
             return res.status(500).json({

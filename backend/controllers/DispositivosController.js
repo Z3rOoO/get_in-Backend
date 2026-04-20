@@ -1,4 +1,5 @@
-import { Create, Read, Delete, Update } from "../config/database";
+// import { Create, Read, Delete, Update } from "../config/database.js";
+import { prisma } from '../config/prisma.js';
 
 class DispositivosController {
 
@@ -16,7 +17,7 @@ class DispositivosController {
             return res.status(201).json({
                 sucesso: true,
                 mensagem: "Dispositivo cadastrado com sucesso",
-                dados: result//retorna os valores com o id do dispositivo que foi criado
+                data: result//retorna os valores com o id do dispositivo que foi criado
             })
         } catch (e) {
             return res.status(500).json({
@@ -51,13 +52,13 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Dados do dispositivos atualizados",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao atualizar so dados dos funcionarios",
-                dados: e.message
+                erro: e.message
             })
         }
     }
@@ -68,7 +69,7 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Dispositivos lidos com sucesso",
-                dados: dispositivos
+                data: dispositivos
             })
         } catch (e) {
             return res.status(500).json({
@@ -83,7 +84,7 @@ class DispositivosController {
         try {
             const { id } = req.params
 
-            const dado = await prisma.dispositivo.findUnique({
+            const dispositivo = await prisma.dispositivo.findUnique({
                 where: {
                     id: Number(id)
                 }
@@ -92,7 +93,7 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "dispositivo lido com sucesso",
-                dados: dado
+                data: dispositivo
             })
         } catch (e) {
             return res.status(500).json({
@@ -107,7 +108,7 @@ class DispositivosController {
         try {
             const { id } = req.params
 
-            const dado = await prisma.dispositivo.findMany({
+            const dispositivos = await prisma.dispositivo.findMany({
                 where: {
                     idDepartamento: Number(id)
                 }
@@ -116,7 +117,7 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Dispositivos encontrados com sucesso",
-                dados: dado
+                data: dispositivos
             })
         } catch (e) {
             return res.status(500).json({
@@ -131,7 +132,7 @@ class DispositivosController {
         try {
             const { name } = req.params
 
-            const dado = await prisma.dispositivo.findMany({
+            const dispositivos = await prisma.dispositivo.findMany({
                 where: {
                     local: {
                         contains: name
@@ -141,7 +142,7 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuarios encontrados com sucesso",
-                dados: dado
+                data: dispositivos
             })
 
         } catch (e) {
@@ -164,7 +165,7 @@ class DispositivosController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Dispositivo deletado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({

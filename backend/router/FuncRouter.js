@@ -1,15 +1,16 @@
 import express from 'express';
 const router = express.Router();
 
+import Auth from '../middleware/AuthMiddleware.js';
 import FuncController from '../controllers/FuncController.js';
 
-router.get('/', FuncController.Read);
-router.get('/:id', FuncController.ReadId);
-router.get('/name/:id', FuncController.ReadName);
-router.get('/cpf/:id', FuncController.ReadCpf);
-router.post('/', FuncController.Create);
-router.put('/:id', FuncController.Update);
-router.delete('/:id', FuncController.Delete);
+router.get('/', Auth, FuncController.Read);
+router.get('/:id', Auth, FuncController.ReadId);
+router.get('/name/:nome', Auth, FuncController.ReadName);
+router.get('/cpf/:cpf', Auth, FuncController.ReadCpf);
+router.post('/', Auth, FuncController.Create);
+router.put('/:id', Auth, FuncController.Update);
+router.delete('/:id', Auth, FuncController.Delete);
 
 
 export default router;

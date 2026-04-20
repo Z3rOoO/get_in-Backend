@@ -1,13 +1,15 @@
 import express from 'express';
+import Auth from '../middleware/AuthMiddleware.js';
 import CrachaController from '../controllers/CrachaController.js';
 const router = express.Router();
 
-router.post('/', CrachaController.create);
-router.get('/', CrachaController.read);
-router.get('/:id', CrachaController.readById);
-router.get('/status/:status', CrachaController.readByStatus);
-router.put('/:id', CrachaController.update);
-router.delete('/:id', CrachaController.delete);
+
+router.post('/', Auth, CrachaController.create);
+router.get('/', Auth, CrachaController.read);
+router.get('/status/:status', Auth, CrachaController.readByStatus);
+router.get('/:id', Auth, CrachaController.readById);
+router.put('/:id', Auth, CrachaController.update);
+router.delete('/:id', Auth, CrachaController.delete);
 
 
 

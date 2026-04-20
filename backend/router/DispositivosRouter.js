@@ -1,11 +1,12 @@
 import  express from 'express';
+import Auth from '../middleware/AuthMiddleware.js';
 import ctl from '../controllers/DispositivosController.js';
 const router = express.Router();
 
-router.get('/', ctl.Read);
-router.get('/:id', ctl.ReadById);
-router.post('/', ctl.Create);
-router.put('/:id', ctl.Update);
-router.delete('/:id', ctl.Delete);
+router.get('/', Auth, ctl.Read);
+router.get('/:id', Auth, ctl.ReadById);
+router.post('/', Auth, ctl.Create);
+router.put('/:id', Auth, ctl.Update);
+router.delete('/:id', Auth, ctl.Delete);
 
 export default router;

@@ -1,4 +1,5 @@
 import { getConnection, Create, Read, Update, Delete, hashPassword } from '../config/database.js';
+import { prisma } from '../config/prisma.js';
 
 class FuncController {
     static async Read(req, res) {
@@ -7,7 +8,7 @@ class FuncController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionarios lidos com sucesso",
-                dados: func
+                data: func
             })
         } catch (e) {
             return res.status(500).json({
@@ -29,7 +30,7 @@ class FuncController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionario lido com sucesso",
-                dados: func
+                data: func
             })
         } catch (e) {
             return res.status(500).json({
@@ -42,18 +43,18 @@ class FuncController {
 
     static async ReadName(req, res) {
         try {
-            const { id } = req.params;
+            const { nome } = req.params;
             const func = await prisma.funcionario.findMany({
                 where: {
                     nome: {
-                        contains: id
+                        contains: nome
                     }
                 }
-            })//le o resultado do banco e filtra por nome por meio da função read do database.js
+            })//le o resultado do banco e filtra por nome
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionario lido com sucesso",
-                dados: func
+                data: func
             })
         } catch (e) {
             return res.status(500).json({
@@ -66,18 +67,18 @@ class FuncController {
 
     static async ReadCpf(req, res) {
         try {
-            const { id } = req.params;
+            const { cpf } = req.params;
             const func = await prisma.funcionario.findMany({
                 where: {
                     cpf: {
-                        contains: id
+                        contains: cpf
                     }
                 }
-            })//le o resultado do banco e filtra por cpf por meio da função read do database.js
+            })//le o resultado do banco e filtra por cpf
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionario lido com sucesso",
-                dados: func
+                data: func
             })
         } catch (e) {
             return res.status(500).json({
@@ -109,7 +110,7 @@ class FuncController {
             return res.status(201).json({
                 sucesso: true,
                 mensagem: "Funcionario criado com sucesso",
-                dados: { id: result.insertId, ...newFunc } // retorna o ID do novo funcionario junto com os dados fornecidos
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -122,13 +123,13 @@ class FuncController {
 
     static async Update(req, res) {
         try {
-            const { id } = req.body
-            const { idUser, idDepartamento, tipo, dataDeNascimento, imagem, senha } = req.body
+            const { id } = req.params
+            const { idUsuario, idDepartamento, tipo, dataDeNascimento, imagem, senha } = req.body
 
             const senhaHash = await hashPassword(senha) // cria um hash da senha usando a função hashPassword do database.js
 
             const updatedFunc = {
-                idUser,
+                idUsuario,
                 idDepartamento,
                 tipo,
                 dataDeNascimento,
@@ -145,7 +146,7 @@ class FuncController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionario atualizado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -167,7 +168,7 @@ class FuncController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionario deletado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({

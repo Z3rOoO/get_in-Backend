@@ -16,7 +16,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuários lidos com sucesso",
-                dados: user
+                data: user
             })
         } catch (e) {
             return res.status(500).json({
@@ -38,7 +38,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
-                dados: user
+                data: user
             })
         } catch (e) {
             return res.status(500).json({
@@ -61,7 +61,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
-                dados: user
+                data: user
             })
         } catch (e) {
             return res.status(500).json({
@@ -84,7 +84,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
-                dados: user
+                data: user
             })
         } catch (e) {
             return res.status(500).json({
@@ -110,7 +110,7 @@ class UserController {
             return res.status(201).json({
                 sucesso: true,
                 mensagem: "Usuário criado com sucesso",
-                dados: { id: result.insertId, ...data } // retorna o ID do novo usuário junto com os dados fornecidos
+                data: result
             })
 
         } catch (e) {
@@ -141,7 +141,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário atualizado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({
@@ -163,7 +163,7 @@ class UserController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário deletado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e) {
             return res.status(500).json({

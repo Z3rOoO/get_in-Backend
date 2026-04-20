@@ -43,7 +43,7 @@ class CrachaController {
                 mensagem: "Crachás listados com sucesso",
                 data: crachas
             })
-        } catch {
+        } catch (e) {
             res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao listar crachás",
@@ -69,9 +69,9 @@ class CrachaController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Crachá atualizado com sucesso",
-                dados: result
+                data: result
             })
-        } catch {
+        } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao atualizar o crachá",
@@ -93,7 +93,7 @@ class CrachaController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Crachá deletado com sucesso",
-                dados: result
+                data: result
             })
         } catch (e){
             return res.status(500).json({
@@ -108,7 +108,7 @@ class CrachaController {
         try {
             const { id } = req.params;
 
-            const result = await prisma.cracha.findMany({
+            const result = await prisma.cracha.findUnique({
                 where: {
                     id: Number(id)
                 }
@@ -116,9 +116,9 @@ class CrachaController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Crachá encontrado com sucesso",
-                dado: result
+                data: result
             })
-        } catch {
+        } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao encontrar o crachá",
@@ -151,9 +151,9 @@ class CrachaController {
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Crachás encontrados com sucesso",
-                dados: result
+                data: result
             });
-        } catch {
+        } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao encontrar os crachás",
