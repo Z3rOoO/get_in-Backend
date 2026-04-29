@@ -132,16 +132,151 @@ A maioria das rotas exige autenticação via **JWT**.
 | POST | `/auth/` | Registrar um novo funcionário (Cria Usuário + Funcionário) |
 | POST | `/auth/login` | Autenticar e receber token JWT |
 
-#### Exemplo de Registro:
-**POST** `/auth/`
+#### 📌 POST `/auth/` - Registrar novo funcionário
+
+**Descrição:** Cria uma nova conta de usuário e um registro de funcionário associado no sistema.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/auth/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  ```
+- **Body:**
+  ```json
+  {
+    "nome": "João Silva",
+    "cpf": "12345678901",
+    "celular": "(11) 98765-4321",
+    "email": "joao.silva@example.com",
+    "idDepartamento": 1, // ID de um departamento existente
+    "tipo": "func",      // Tipo de funcionário (func, port, sup, ger, adm)
+    "dataDeNascimento": "1990-01-01",
+    "senha": "senha_segura_123"
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+fetch('http://localhost:3000/auth/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    nome: 'João Silva',
+    cpf: '12345678901',
+    celular: '(11) 98765-4321',
+    email: 'joao.silva@example.com',
+    idDepartamento: 1,
+    tipo: 'func',
+    dataDeNascimento: '1990-01-01',
+    senha: 'senha_segura_123',
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
 ```json
 {
-  "nome": "João Silva",
-  "cpf": "12345678901",
-  "email": "joao@email.com",
-  "idDepartamento": 1,
-  "tipo": "adm",
-  "senha": "senha_segura"
+  "sucesso": true,
+  "mensagem": "Usuário e funcionário criados com sucesso",
+  "data": {
+    "usuario": {
+      "id": 1,
+      "nome": "João Silva",
+      "cpf": "12345678901",
+      "celular": "(11) 98765-4321",
+      "email": "joao.silva@example.com"
+    },
+    "funcionario": {
+      "id": 1,
+      "idUsuario": 1,
+      "idDepartamento": 1,
+      "tipo": "func",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "imagem": null,
+      "senhaHash": "$2a$10$...
+    }
+  }
+}
+```
+
+**Resposta de Erro (400 Bad Request - Exemplo):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Usuário já é funcionário"
+}
+```
+
+---
+
+#### 📌 POST `/auth/login` - Autenticar usuário
+
+**Descrição:** Autentica um usuário e retorna um token JWT para ser usado em requisições subsequentes.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/auth/login`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  ```
+- **Body:**
+  ```json
+  {
+    "email": "joao.silva@example.com",
+    "senha": "senha_segura_123"
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+fetch('http://localhost:3000/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'joao.silva@example.com',
+    senha: 'senha_segura_123',
+  }),
+})
+.then(response => response.json())
+.then(data => {
+  console.log(data);
+  if (data.sucesso) {
+    localStorage.setItem('jwtToken', data.token); // Armazena o token
+  }
+})
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // Seu token JWT
+  "sucesso": true,
+  "mensagem": "login bem-sucedido",
+  "data": {
+    "id": 1,
+    "nome": "João Silva",
+    "cpf": "12345678901",
+    "celular": "(11) 98765-4321",
+    "email": "joao.silva@example.com",
+    "dataDeCriacao": "2026-04-29T10:00:00.000Z"
+  }
+}
+```
+
+**Resposta de Erro (401 Unauthorized - Exemplo):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Senha incorreta"
 }
 ```
 
@@ -160,6 +295,123 @@ A maioria das rotas exige autenticação via **JWT**.
 | PUT | `/user/:id` | Atualizar dados do usuário |
 | DELETE | `/user/:id` | Remover usuário |
 
+#### 📌 GET `/user/` - Listar todos os usuários
+
+**Descrição:** Retorna uma lista de todos os usuários cadastrados no sistema.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/user/`
+- **Headers:**
+  ```
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken'); // Obtém o token armazenado
+
+fetch('http://localhost:3000/user/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+  },
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "nome": "João Silva",
+    "cpf": "12345678901",
+    "celular": "(11) 98765-4321",
+    "email": "joao.silva@example.com",
+    "dataDeCriacao": "2026-04-29T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "nome": "Maria Souza",
+    "cpf": "98765432109",
+    "celular": "(11) 91234-5678",
+    "email": "maria.souza@example.com",
+    "dataDeCriacao": "2026-04-29T10:05:00.000Z"
+  }
+]
+```
+
+**Resposta de Erro (401 Unauthorized - Exemplo):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Token inválido ou expirado"
+}
+```
+
+---
+
+#### 📌 POST `/user/` - Criar um usuário simples
+
+**Descrição:** Cria um novo registro de usuário no sistema sem vinculá-lo a um funcionário.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/user/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "nome": "Carlos Pereira",
+    "cpf": "11122233344",
+    "cel": "(11) 99999-8888",
+    "email": "carlos.pereira@example.com"
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/user/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    nome: 'Carlos Pereira',
+    cpf: '11122233344',
+    cel: '(11) 99999-8888',
+    email: 'carlos.pereira@example.com',
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário criado com sucesso",
+  "data": {
+    "id": 3,
+    "nome": "Carlos Pereira",
+    "cpf": "11122233344",
+    "celular": "(11) 99999-8888",
+    "email": "carlos.pereira@example.com",
+    "dataDeCriacao": "2026-04-29T10:10:00.000Z"
+  }
+}
+```
+
 ---
 
 ### 👔 Funcionários (`/func`)
@@ -173,6 +425,68 @@ A maioria das rotas exige autenticação via **JWT**.
 | PUT | `/func/:id` | Atualizar dados profissionais |
 | DELETE | `/func/:id` | Remover registro de funcionário |
 
+#### 📌 POST `/func/` - Criar registro de funcionário
+
+**Descrição:** Vincula um usuário existente a um registro de funcionário, definindo seu departamento, tipo e senha.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/func/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "idUsuario": 3, // ID de um usuário existente (ex: Carlos Pereira)
+    "idDepartamento": 2, // ID de um departamento existente
+    "tipo": "port",      // Tipo de funcionário (func, port, sup, ger, adm)
+    "dataDeNascimento": "1985-05-15",
+    "senha": "senha_porteiro_456"
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/func/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    idUsuario: 3,
+    idDepartamento: 2,
+    tipo: 'port',
+    dataDeNascimento: '1985-05-15',
+    senha: 'senha_porteiro_456',
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario criado com sucesso",
+  "data": {
+    "id": 2,
+    "idUsuario": 3,
+    "idDepartamento": 2,
+    "tipo": "port",
+    "dataDeNascimento": "1985-05-15T00:00:00.000Z",
+    "imagem": null,
+    "senhaHash": "$2a$10$...
+  }
+}
+```
+
 ---
 
 ### 🏢 Departamentos (`/dep`)
@@ -183,6 +497,61 @@ A maioria das rotas exige autenticação via **JWT**.
 | POST | `/dep/` | Criar novo departamento |
 | PUT | `/dep/:id` | Atualizar departamento (nome/gestor) |
 | DELETE | `/dep/:id` | Remover departamento |
+
+#### 📌 POST `/dep/` - Criar novo departamento
+
+**Descrição:** Adiciona um novo departamento à estrutura da empresa.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/dep/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "nome": "Portaria",
+    "idGestor": 2 // Opcional: ID de um funcionário que será o gestor
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/dep/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    nome: 'Portaria',
+    idGestor: 2, // ID do funcionário Carlos Pereira
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Criado o departamento Portaria com sucesso!"
+}
+```
+
+**Resposta de Erro (400 Bad Request - Exemplo):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Departamento já existe"
+}
+```
 
 ---
 
@@ -195,6 +564,43 @@ A maioria das rotas exige autenticação via **JWT**.
 | POST | `/cracha/` | Gerar novo crachá (status padrão: disponível) |
 | GET | `/cracha/status/:status` | Filtrar por status (`d`=disponível, `p`=perdido, `e`=emUso) |
 
+#### 📌 POST `/cracha/` - Gerar novo crachá
+
+**Descrição:** Cria um novo registro de crachá com status `disponivel`.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/cracha/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:** (Não é necessário corpo para esta requisição)
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/cracha/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "message": "Crachá criado com sucesso"
+}
+```
+
 ---
 
 ### 🏷️ Tags RFID (`/tags`)
@@ -204,6 +610,68 @@ A maioria das rotas exige autenticação via **JWT**.
 |--------|------|-----------|
 | POST | `/tags/` | Vincular nova tag a usuário/crachá |
 | GET | `/tags/:id` | Consultar detalhes de uma tag |
+
+#### 📌 POST `/tags/` - Vincular nova tag
+
+**Descrição:** Associa um código de tag RFID a um usuário e um crachá existente, podendo ser temporária e com validade.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/tags/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "idUsuario": 1, // ID do usuário (ex: João Silva)
+    "idCracha": 1,  // ID do crachá (recém-criado)
+    "codigoTag": "TAG123456",
+    "temporario": false,
+    "validade": null // Opcional: "YYYY-MM-DDTHH:MM:SSZ" para tags temporárias
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/tags/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    idUsuario: 1,
+    idCracha: 1,
+    codigoTag: 'TAG123456',
+    temporario: false,
+    validade: null,
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Tag criado com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idCracha": 1,
+    "codigoTag": "TAG123456",
+    "temporario": false,
+    "validade": null,
+    "dataDeCriacao": "2026-04-29T10:20:00.000Z"
+  }
+}
+```
 
 ---
 
@@ -216,6 +684,60 @@ A maioria das rotas exige autenticação via **JWT**.
 | PUT | `/requisicao/:id` | Atualizar status (aprovado/recusado) |
 | GET | `/requisicao/dep/:id` | Listar requisições de um departamento específico |
 
+#### 📌 POST `/requisicao/` - Criar nova solicitação de acesso
+
+**Descrição:** Um usuário solicita acesso a um determinado departamento.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/requisicao/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "idUsuario": 1, // ID do usuário solicitante
+    "idDepartamento": 2 // ID do departamento desejado
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/requisicao/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    idUsuario: 1,
+    idDepartamento: 2,
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição de acesso criada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idDepartamento": 2,
+    "status": "pendente",
+    "dataDaRequisicao": "2026-04-29T10:25:00.000Z"
+  }
+}
+```
+
 ---
 
 ### 🚪 Dispositivos (`/dispositivos`)
@@ -225,11 +747,104 @@ A maioria das rotas exige autenticação via **JWT**.
 |--------|------|-----------|
 | GET | `/dispositivos/` | Listar dispositivos cadastrados |
 | GET | `/dispositivos/:id/:cracha` | **Validação de Acesso:** Verifica se o crachá tem permissão no dispositivo |
+| POST | `/dispositivos/` | Criar novo dispositivo |
 
-#### Exemplo de Validação (Uso por Hardware):
-**GET** `/dispositivos/1/TAG123456`
-- **Sucesso (200):** Acesso permitido.
-- **Erro (403):** Acesso negado (usuário sem permissão para este departamento).
+#### 📌 POST `/dispositivos/` - Criar novo dispositivo
+
+**Descrição:** Cadastra um novo dispositivo leitor de crachás em um departamento.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/dispositivos/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "idDepartamento": 2, // ID do departamento onde o dispositivo será instalado
+    "local": "Entrada Principal"
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/dispositivos/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    idDepartamento: 2,
+    local: 'Entrada Principal',
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivo criado com sucesso",
+  "data": {
+    "id": 1,
+    "idDepartamento": 2,
+    "local": "Entrada Principal",
+    "dataManutencao": null,
+    "dataDeCriacao": "2026-04-29T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+#### 📌 GET `/dispositivos/:id/:cracha` - Validação de Acesso
+
+**Descrição:** Verifica se um crachá específico (`:cracha`) tem permissão para acessar o dispositivo (`:id`) em seu departamento.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/dispositivos/1/TAG123456` (Exemplo: Dispositivo ID 1, Crachá TAG123456)
+- **Headers:** (Não requer autenticação JWT, pois é para uso por hardware)
+
+**Exemplo `fetch`:**
+```javascript
+fetch('http://localhost:3000/dispositivos/1/TAG123456', {
+  method: 'GET',
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK - Acesso Permitido):**
+```json
+{
+  "sucesso": true
+}
+```
+
+**Resposta de Erro (403 Forbidden - Acesso Negado):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Acesso negado: usuário não tem permissão para acessar este dispositivo"
+}
+```
+
+**Resposta de Erro (404 Not Found - Crachá/Dispositivo não cadastrado):**
+```json
+{
+  "sucesso": false,
+  "mensagem": "Cracha não cadastrado"
+}
+```
 
 ---
 
@@ -240,6 +855,65 @@ A maioria das rotas exige autenticação via **JWT**.
 | GET | `/logs/` | Listar histórico completo de acessos |
 | GET | `/logs/user/:idUsuario` | Histórico de um usuário específico |
 | GET | `/logs/device/:idDispositivo` | Histórico de um dispositivo específico |
+| POST | `/logs/` | Criar novo registro de log |
+
+#### 📌 POST `/logs/` - Criar novo registro de log
+
+**Descrição:** Registra uma entrada ou saída de um usuário em um dispositivo.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/logs/`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body:**
+  ```json
+  {
+    "idDispositivo": 1, // ID do dispositivo
+    "idUsuario": 1,     // ID do usuário
+    "dataDeEntrada": "2026-04-29T10:35:00.000Z", // Opcional: Data e hora da entrada
+    "dataDeSaida": null // Opcional: Data e hora da saída (pode ser atualizado depois)
+  }
+  ```
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+
+fetch('http://localhost:3000/logs/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    idDispositivo: 1,
+    idUsuario: 1,
+    dataDeEntrada: new Date().toISOString(),
+    dataDeSaida: null,
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Log criado com sucesso",
+  "data": {
+    "id": 1,
+    "idDispositivo": 1,
+    "idUsuario": 1,
+    "dataDeEntrada": "2026-04-29T10:35:00.000Z",
+    "dataDeSaida": null
+  }
+}
+```
 
 ---
 
