@@ -1,5 +1,6 @@
 // import { Create, Read, Delete, Update } from "../config/database.js";
 import { prisma } from '../config/prisma.js';
+import mqtt from "mqtt"
 
 class DispositivosController {
 
@@ -177,72 +178,90 @@ class DispositivosController {
     }
 
     static async verificarCracha(req, res) {
+
+        const client = await mqtt.connect("mqtt://broker.hivemq.com")
+
         try {
             const { id, cracha } = req.params
 
-            const dispositivo = await prisma.dispositivo.findUnique({
-                where: {
-                    id: Number(id)
-                }, select: {
-                    idDepartamento: true
+            await client.on("connect", () => {
+                console.log("conectou aqui na api")
+                client.subscribe(`dispositivos/${id}`)
+            })
+
+
+                const dispositivo = await prisma.dispositivo.findUnique({
+                    where: {
+                        id: Number(id)
+                    }, select: {
+                        idDepartamento: true
+                    }
+                })
+
+                if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
+
+                    client.publish(`dispositivos/${id}`, "false/Dispositivo não cadastrado")
+
+                    return res.status(404).json({
+                        sucesso: false,
+                        mensagem: "Dispositivo não cadastrado"
+                    })
                 }
-            })
 
-            if(!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
-                return res.status(404).json({
-                    sucesso: false,
-                    mensagem: "Dispositivo não cadastrado"
+                const usuario = await prisma.tag.findUnique({
+                    where: {
+                        codigoTag: cracha
+                    }, select: {
+                        idUsuario: true
+                    }
                 })
-            }
 
-            const usuario = await prisma.tag.findUnique({
-                where: {
-                    codigoTag: cracha
-                }, select: {
-                    idUsuario: true
+                if (!usuario) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que o cracha não é cadastrado
+
+                    client.publish(`dispositivos/${id}`, "false/Cracha não cadastrado")
+
+                    return res.status(404).json({
+                        sucesso: false,
+                        mensagem: "Cracha não cadastrado"
+                    })
                 }
-            })
 
-            if (!usuario) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que o cracha não é cadastrado
-                return res.status(404).json({
-                    sucesso: false,
-                    mensagem: "Cracha não cadastrado"
+                const departamento = await prisma.funcionario.findFirst({
+                    where: {
+                        idUsuario: usuario.idUsuario,
+                    },
+                    select: {
+                        idDepartamento: true
+                    }
                 })
-            }
 
-            const departamento = await prisma.funcionario.findFirst({
-                where: {
-                    idUsuario: usuario.idUsuario,
-                },
-                select: {
-                    idDepartamento: true
+                if (!departamento) { // verifica se o usuario tem um departamento associado, se não tiver, retorna que o usuario não tem departamento
+                    client.publish(`dispositivos/${id}`, "false/Usuario não tem departamento associado")
+                    
+                    return res.status(404).json({
+                        sucesso: false,
+                        mensagem: "Usuario não tem departamento associado"
+                    })
                 }
-            })
 
-            if(!departamento) { // verifica se o usuario tem um departamento associado, se não tiver, retorna que o usuario não tem departamento
-                return res.status(404).json({
-                    sucesso: false,
-                    mensagem: "Usuario não tem departamento associado"
+
+                // console.log(departamento.idDepartamento)
+                // console.log(departamento)
+                // console.log(`id do departamento: ${dispositivo.idDepartamento}, id do usuario: ${usuario.idUsuario}`)
+                if (departamento.idDepartamento != dispositivo.idDepartamento) {
+                    client.publish(`dispositivos/${id}`, "aguarde/Departamento não autorizado, enviando verificação ao supervisor aguarde...")
+                    return res.status(403).json({
+                        sucesso: false,
+                        mensagem: "Acesso negado: usuário não tem permissão para acessar este dispositivo"
+                    })
+                }   
+
+
+                client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
+                return res.status(200).json({
+                    sucesso: true
                 })
-            }
 
-
-            // console.log(departamento.idDepartamento)
-            // console.log(departamento)
-            // console.log(`id do departamento: ${dispositivo.idDepartamento}, id do usuario: ${usuario.idUsuario}`)
-            if (departamento.idDepartamento != dispositivo.idDepartamento) {
-                return res.status(403).json({
-                    sucesso: false,
-                    mensagem: "Acesso negado: usuário não tem permissão para acessar este dispositivo"
-                })
-            }
-
-
-
-
-            return res.status(200).json({
-                sucesso: true
-            })
 
         } catch (e) {
             return res.status(500).json({
