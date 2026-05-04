@@ -14,7 +14,7 @@ export const connectMQTT = () => {
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        await fetch(`/dispositivos/${id}/${cracha}`)
+        await fetch(`https://get-in-ilp5.onrender.com/dispositivos/${id}/${cracha}`)
     })
 
     client.on("error", (err) => {
