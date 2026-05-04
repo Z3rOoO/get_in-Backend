@@ -14,7 +14,7 @@ class RequisicaoFuncionarioController {
                 idDepartamento
             }
 
-            const result = await prisma.requisicoesDeAcesso.create({
+            const result = await prisma.requisicaoDeAcesso.create({
                 data: dado
             })
             return res.status(201).json({
@@ -33,7 +33,7 @@ class RequisicaoFuncionarioController {
 
     static async Read(req, res) {
         try {
-            const result = await prisma.requisicoesDeAcesso.findMany() //le as requisições da tabela "requisicoesDeAcessos"
+            const result = await prisma.requisicaoDeAcesso.findMany() //le as requisições da tabela "requisicoesDeAcessos"
             if (result.length === 0) {
                 return res.status(404).json({
                     sucesso: false,
@@ -57,7 +57,7 @@ class RequisicaoFuncionarioController {
     static async ReadById(req, res) {
         try {
             const { id } = req.params
-            const result = await prisma.requisicoesDeAcesso.findUnique({
+            const result = await prisma.requisicaoDeAcesso.findUnique({
                 where: {
                     id: Number(id)
                 }
@@ -86,7 +86,7 @@ class RequisicaoFuncionarioController {
     static async ReadByFunc(req, res) {
         try {
             const { id } = req.params
-            const result = await prisma.requisicoesDeAcesso.findMany({
+            const result = await prisma.requisicaoDeAcesso.findMany({
                 where: {
                     idUsuario: Number(id)
                 }
@@ -120,7 +120,7 @@ class RequisicaoFuncionarioController {
             const data = {
                 status
             }
-            const result = await prisma.requisicoesDeAcesso.update({
+            const result = await prisma.requisicaoDeAcesso.update({
                 where: {
                     id: Number(id)
                 },
@@ -147,7 +147,7 @@ class RequisicaoFuncionarioController {
     static async Delete(req, res) {
         try {
             const { id } = req.params
-            const result = await prisma.requisicoesDeAcesso.delete({
+            const result = await prisma.requisicaoDeAcesso.delete({
                 where: {
                     id: Number(id)
                 }
@@ -170,7 +170,7 @@ class RequisicaoFuncionarioController {
     static async ReadByDepartamento(req, res) {
         try {
             const { id } = req.params
-            const departamento = await prisma.requisicoesDeAcesso.findMany({
+            const departamento = await prisma.requisicaoDeAcesso.findMany({
                 where: {
                     idDepartamento: Number(id)
                 }

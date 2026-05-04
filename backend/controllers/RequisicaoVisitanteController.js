@@ -13,7 +13,7 @@ class RequisicaoVisitanteController {
                 });
             }
 
-            const resultado = await prisma.requisicoesDeAcesso.create({
+            const resultado = await prisma.requisicaoDeVisita.create({
                 data: {
                     idUsuario: Number(idUsuario),
                     idDepartamento: Number(idDepartamento),
@@ -39,7 +39,7 @@ class RequisicaoVisitanteController {
 
     static async Read(req, res) {
         try {
-            const resultado = await prisma.requisicoesDeAcesso.findMany({
+            const resultado = await prisma.requisicaoDeVisita.findMany({
                 include: {
                     usuario: true,
                     departamento: true
@@ -64,7 +64,7 @@ class RequisicaoVisitanteController {
         try {
             const { id } = req.params;
 
-            const resultado = await prisma.requisicoesDeAcesso.findUnique({
+            const resultado = await prisma.requisicaoDeVisita.findUnique({
                 where: { id: Number(id) },
                 include: {
                     usuario: true,
@@ -98,7 +98,7 @@ class RequisicaoVisitanteController {
             const { id } = req.params;
             const { status, motivo, validade } = req.body;
 
-            const resultado = await prisma.requisicoesDeAcesso.update({
+            const resultado = await prisma.requisicaoDeVisita.update({
                 where: { id: Number(id) },
                 data: {
                     status: status || undefined,
@@ -125,7 +125,7 @@ class RequisicaoVisitanteController {
         try {
             const { id } = req.params;
 
-            const resultado = await prisma.requisicoesDeAcesso.delete({
+            const resultado = await prisma.requisicaoDeVisita.delete({
                 where: { id: Number(id) }
             });
 
