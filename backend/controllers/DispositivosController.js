@@ -184,10 +184,10 @@ class DispositivosController {
         try {
             const { id, cracha } = req.params
 
-            await client.on("connect", () => {
+            await client.on("connect", async () => {
                 console.log("conectou aqui na api")
                 client.subscribe(`dispositivos/${id}`)
-            })
+            
 
 
                 const dispositivo = await prisma.dispositivo.findUnique({
@@ -260,16 +260,16 @@ class DispositivosController {
                 client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
                 return res.status(200).json({
                     sucesso: true
-                })
+                }) })
 
-
+                
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao verificar o crachá",
                 erro: e.message
-            })
-        }
+            }) 
+        } 
     }
 }
 
