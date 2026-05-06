@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { prisma } from '../config/prisma.js';
+import { comparePassword, hashPassword } from '../config/utils.js';
 
 dotenv.config()
 
