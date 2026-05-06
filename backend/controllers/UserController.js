@@ -1,4 +1,4 @@
-import { getConnection, Read, Create, Update, Delete } from "../config/database.js";
+// import { getConnection, Read, Create, Update, Delete } from "../config/database.js";
 import { prisma } from "../config/prisma.js";
 
 class UserController {

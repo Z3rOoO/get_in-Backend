@@ -1,4 +1,4 @@
-import { getConnection, Create, Read, Update, Delete, hashPassword } from '../config/database.js';
+// import { getConnection, Create, Read, Update, Delete, hashPassword } from '../config/database.js';
 import { prisma } from '../config/prisma.js';
 
 class FuncController {

@@ -1,4 +1,4 @@
-import { Create, Update, Delete, Read } from "../config/database.js";
+// import { Create, Update, Delete, Read } from "../config/database.js";
 import { prisma } from '../config/prisma.js';
 
 class RequisicaoVisitanteController {

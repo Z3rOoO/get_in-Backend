@@ -1,4 +1,3 @@
-import { getConnection, hashPassword, Create, Read, Update, Delete, FindOne, comparePassword } from '../config/database.js';
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { prisma } from '../config/prisma.js';

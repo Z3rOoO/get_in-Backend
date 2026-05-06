@@ -187,7 +187,7 @@ class DispositivosController {
             await client.on("connect", async () => {
                 console.log("conectou aqui na api")
                 client.subscribe(`dispositivos/${id}`)
-            
+
 
 
                 const dispositivo = await prisma.dispositivo.findUnique({
@@ -200,11 +200,11 @@ class DispositivosController {
 
                 if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
 
-                    client.publish(`dispositivos/${id}`, "false/Dispositivo não cadastrado")
+                    client.publish(`dispositivos/${id}`, "false/ERRO, DISPOSITIVO NÃO VINCULADO")
 
                     return res.status(404).json({
                         sucesso: false,
-                        mensagem: "Dispositivo não cadastrado"
+                        mensagem: "ERRO, DISPOSITIVO NÃO VINCULADO"
                     })
                 }
 
@@ -218,15 +218,15 @@ class DispositivosController {
 
                 if (!usuario) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que o cracha não é cadastrado
 
-                    client.publish(`dispositivos/${id}`, "false/Cracha não cadastrado")
+                    client.publish(`dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO")
 
                     return res.status(404).json({
                         sucesso: false,
-                        mensagem: "Cracha não cadastrado"
+                        mensagem: "CRACHA NAO CADASTRADO NO SISTEMA"
                     })
                 }
 
-                const departamento = await prisma.funcionario.findFirst({
+                const departamento = await prisma.funcionario.findMany({
                     where: {
                         idUsuario: usuario.idUsuario,
                     },
@@ -236,40 +236,91 @@ class DispositivosController {
                 })
 
                 if (!departamento) { // verifica se o usuario tem um departamento associado, se não tiver, retorna que o usuario não tem departamento
-                    client.publish(`dispositivos/${id}`, "false/Usuario não tem departamento associado")
-                    
+                    client.publish(`dispositivos/${id}`, "false/USUARIO SEM DEPARTAMENTO ASSOCIADO")
+
                     return res.status(404).json({
                         sucesso: false,
-                        mensagem: "Usuario não tem departamento associado"
+                        mensagem: "USUARIO SEM DEPARTAMENTO ASSOCIADO"
                     })
                 }
 
 
-                // console.log(departamento.idDepartamento)
-                // console.log(departamento)
-                // console.log(`id do departamento: ${dispositivo.idDepartamento}, id do usuario: ${usuario.idUsuario}`)
-                if (departamento.idDepartamento != dispositivo.idDepartamento) {
-                    client.publish(`dispositivos/${id}`, "aguarde/Departamento não autorizado, enviando verificação ao supervisor aguarde...")
+                const requisicao = await prisma.view_central_requisicoes.findFirst({
+                    where: {
+                        idUsuario: usuario.idUsuario,
+                        idDepartamento: dispositivo.idDepartamento
+                    },
+                    select: {
+                        idUsuario: true,
+                        idDepartamento: true,
+                        status: true
+                    }
+                })
+
+                if (requisicao) {
+                    if (requisicao.status === "aprovado") {
+                        client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
+                        return res.status(200).json({
+                            sucesso: true,
+                            mensagem: "ACESSO PERMITIDO"
+                        })
+                    }
+                    if (requisicao.status === "recusado") {
+                        client.publish(`dispositivos/${id}`, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR")
+                        return res.status(200).json({
+                            sucesso: false,
+                            mensagem: "ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR"
+                        })
+                    }
+                    if (requisicao.status === "pendente") {
+                        client.publish(`dispositivos/${id}`, "/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
+                        return res.status(200).json({
+                            sucesso: false,
+                            mensagem: "AGUARDANDO VERIFICAÇÃO DO SUPERVISOR"
+                        })
+                    }
+                }
+
+                if (departamento.some(d => d.idDepartamento === dispositivo.idDepartamento) !== true) {
+
+                    const funcionario = await prisma.funcionario.findFirst({
+                        where: {
+                            idUsuario: usuario.idUsuario
+                        }
+                    })
+
+                    if (funcionario) {
+                        client.publish(`dispositivos/${id}`, "aguarde/DEPARTAMENTO NÃO AUTORIZADO, SOLICITANDO ACESSO AO SUPERVISOR.")
+                        return res.status(403).json({
+                            sucesso: false,
+                            mensagem: "DEPARTAMENTO NÃO AUTORIZADO, SOLICITADO ACESSO AO SUPERVISOR."
+                        })
+                    }
+
+                    client.publish(`dispositivos/${id}`, "false/ACESSO NEGADO")
                     return res.status(403).json({
                         sucesso: false,
-                        mensagem: "Acesso negado: usuário não tem permissão para acessar este dispositivo"
+                        mensagem: "ACESSO NEGADO"
                     })
-                }   
+
+                }
 
 
                 client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
                 return res.status(200).json({
-                    sucesso: true
-                }) })
+                    sucesso: true,
+                    mensagem: "ACESSO PERMITIDO"
+                })
+            })
 
-                
+
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao verificar o crachá",
                 erro: e.message
-            }) 
-        } 
+            })
+        }
     }
 }
 
