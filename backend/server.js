@@ -45,15 +45,6 @@ app.use('/views', ViewRouter);
 app.use('/api/avatar', AvatarRouter);
 
 
-// Servir arquivos estáticos de uploads
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 app.get("/health", (req, res) => {
     res.status(200).json({ ok: true });
 });

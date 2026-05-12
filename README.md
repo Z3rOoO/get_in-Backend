@@ -82,6 +82,10 @@ PORT=3000
 DATABASE_URL="postgresql://user:password@localhost:5432/get_in_db?schema=public"
 JWT_SECRET="sua_chave_secreta_aqui"
 JWT_EXPIRES_IN="7d"
+
+# Supabase Storage
+SUPABASE_URL="https://dmlshwvpsoqpptjmplfq.supabase.co"
+SUPABASE_KEY="sua_chave_do_supabase"
 ```
 
 ### 4. Migrações do Banco de Dados

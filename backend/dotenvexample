@@ -8,3 +8,7 @@ DB_NAME=techrent_db
 
 JWT_SECRET=segredo_muito_dificil
 JWT_EXPIRES_IN=9h
+
+# Supabase Configuration
+SUPABASE_URL=https://dmlshwvpsoqpptjmplfq.supabase.co
+SUPABASE_KEY=sb_publishable_J8uOG_z3u9VcYhpingUgBw_SihCdLve

@@ -1,16 +1,5 @@
 import { prisma } from "../config/prisma.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(__dirname, "../uploads");
-
-// Criar diretório de uploads se não existir
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
 class AvatarController {
     /**
@@ -85,31 +74,61 @@ class AvatarController {
             });
 
             if (!user) {
-                // Remover arquivo se usuário não existe
-                fs.unlinkSync(req.file.path);
                 return res.status(404).json({
                     sucesso: false,
                     mensagem: "Usuário não encontrado"
                 });
             }
 
-            // Se o usuário já tem avatar, remover o antigo
+            // Gerar nome único para o arquivo
+            const timestamp = Date.now();
+            const random = Math.round(Math.random() * 1e9);
+            const fileExtension = req.file.originalname.split('.').pop();
+            const fileName = `avatar-${userId}-${timestamp}-${random}.${fileExtension}`;
+
+            // Se o usuário já tem avatar, deletar o antigo do Supabase
             if (user.avatar) {
-                const oldAvatarPath = path.join(uploadsDir, path.basename(user.avatar));
-                if (fs.existsSync(oldAvatarPath)) {
-                    fs.unlinkSync(oldAvatarPath);
+                try {
+                    const oldFileName = user.avatar.split('/').pop();
+                    await supabase.storage
+                        .from(BUCKET_NAME)
+                        .remove([oldFileName]);
+                } catch (error) {
+                    console.error("Erro ao deletar avatar antigo:", error);
+                    // Continuar mesmo se falhar ao deletar o antigo
                 }
             }
 
-            // Salvar caminho do novo avatar
-            const avatarPath = `/uploads/${req.file.filename}`;
+            // Upload do novo arquivo para o Supabase
+            const { data, error } = await supabase.storage
+                .from(BUCKET_NAME)
+                .upload(fileName, req.file.buffer, {
+                    contentType: req.file.mimetype,
+                    upsert: false
+                });
 
+            if (error) {
+                return res.status(500).json({
+                    sucesso: false,
+                    mensagem: "Erro ao fazer upload do avatar",
+                    erro: error.message
+                });
+            }
+
+            // Obter URL pública do arquivo
+            const { data: publicUrlData } = supabase.storage
+                .from(BUCKET_NAME)
+                .getPublicUrl(fileName);
+
+            const avatarUrl = publicUrlData.publicUrl;
+
+            // Salvar URL do avatar no banco de dados
             const updatedUser = await prisma.usuario.update({
                 where: {
                     id: Number(userId)
                 },
                 data: {
-                    avatar: avatarPath
+                    avatar: avatarUrl
                 },
                 select: {
                     id: true,
@@ -124,10 +143,6 @@ class AvatarController {
                 data: updatedUser
             });
         } catch (e) {
-            // Remover arquivo em caso de erro
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
-            }
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao enviar avatar",
@@ -163,10 +178,17 @@ class AvatarController {
                 });
             }
 
-            // Remover arquivo do sistema
-            const avatarPath = path.join(uploadsDir, path.basename(user.avatar));
-            if (fs.existsSync(avatarPath)) {
-                fs.unlinkSync(avatarPath);
+            // Extrair nome do arquivo da URL
+            const fileName = user.avatar.split('/').pop();
+
+            // Deletar arquivo do Supabase
+            const { error } = await supabase.storage
+                .from(BUCKET_NAME)
+                .remove([fileName]);
+
+            if (error) {
+                console.error("Erro ao deletar arquivo do Supabase:", error);
+                // Continuar mesmo se falhar ao deletar do storage
             }
 
             // Atualizar usuário removendo referência ao avatar

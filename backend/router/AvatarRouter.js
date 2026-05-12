@@ -1,25 +1,11 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import AvatarController from "../controllers/AvatarController.js";
 
 const router = express.Router();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configurar multer para upload de arquivos
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadsDir = path.join(__dirname, "../uploads");
-        cb(null, uploadsDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, `avatar-${uniqueSuffix}${path.extname(file.originalname)}`);
-    }
-});
+// Configurar multer para armazenar em memória (não em disco)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     // Aceitar apenas imagens

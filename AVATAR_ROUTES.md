@@ -234,18 +234,15 @@ O servidor estará disponível em `http://localhost:3000`
 
 ## Notas Importantes
 
-1. **Armazenamento de Arquivos**: Os avatares são armazenados no diretório `backend/uploads/`. Certifique-se de que este diretório tem permissões de escrita.
+1. **Armazenamento de Arquivos**: Os avatares são armazenados no **Supabase Storage**, no bucket `usuarios`.
 
-2. **URLs de Acesso**: Os avatares podem ser acessados diretamente via URL:
-   ```
-   http://localhost:3000/uploads/avatar-1715000000000-123456789.jpg
-   ```
+2. **URLs de Acesso**: Os avatares podem ser acessados diretamente via URL pública gerada pelo Supabase, que é salva no campo `avatar` do banco de dados.
 
 3. **Validação de Imagens**: O sistema valida o tipo MIME do arquivo. Apenas imagens são aceitas.
 
 4. **Limite de Tamanho**: O tamanho máximo de arquivo é 5MB. Arquivos maiores serão rejeitados.
 
-5. **Substituição Automática**: Se um usuário fizer upload de um novo avatar, o antigo será automaticamente deletado do servidor.
+5. **Substituição Automática**: Se um usuário fizer upload de um novo avatar, o antigo será automaticamente deletado do Supabase Storage.
 
 ---
 
