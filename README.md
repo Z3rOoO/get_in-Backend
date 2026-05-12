@@ -22,6 +22,7 @@ Documentação completa da API Backend do sistema **GET IN**, uma solução robu
   - [📥 Requisições de Acesso (`/requisicao`)](#-requisições-de-acesso-requisicao)
   - [🚪 Dispositivos (`/dispositivos`)](#-dispositivos-dispositivos)
   - [📜 Logs de Acesso (`/logs`)](#-logs-de-acesso-logs)
+- [🖼️ Avatares (`/api/avatar`)](#️-avatares-apiavatar)
 - [Modelos de Dados (Prisma)](#modelos-de-dados-prisma)
 - [Códigos de Resposta](#códigos-de-resposta)
 
@@ -849,6 +850,70 @@ fetch('http://localhost:3000/dispositivos/1/TAG123456', {
 ---
 
 ### 📜 Logs de Acesso (`/logs`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/logs/` | Listar todos os logs de acesso |
+| GET | `/logs/user/:id` | Buscar logs por ID de usuário |
+| GET | `/logs/device/:id` | Buscar logs por ID de dispositivo |
+
+---
+
+### 🖼️ Avatares (`/api/avatar`)
+*Gerencia as imagens de perfil dos usuários.*
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/avatar/:userId` | Obter avatar de um usuário específico |
+| POST | `/api/avatar/:userId` | Fazer upload de avatar para um usuário |
+| DELETE | `/api/avatar/:userId` | Deletar avatar de um usuário |
+| GET | `/api/avatar/` | Listar todos os usuários com avatares |
+
+#### 📌 POST `/api/avatar/:userId` - Upload de Avatar
+
+**Descrição:** Faz upload de uma imagem de avatar para um usuário. Se o usuário já possuir um avatar, o antigo será substituído.
+
+**Requisição:**
+- **URL:** `http://localhost:3000/api/avatar/1`
+- **Headers:**
+  ```
+  Authorization: Bearer <SEU_TOKEN_JWT>
+  ```
+- **Body (form-data):**
+  - `avatar`: Arquivo de imagem (JPEG, PNG, GIF, WebP)
+
+**Exemplo `fetch`:**
+```javascript
+const token = localStorage.getItem('jwtToken');
+const formData = new FormData();
+formData.append('avatar', fileInput.files[0]);
+
+fetch('http://localhost:3000/api/avatar/1', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+  },
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Avatar enviado com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "João Silva",
+    "avatar": "/uploads/avatar-1715000000000-123456789.jpg"
+  }
+}
+```
+
+---
 
 | Método | Rota | Descrição |
 |--------|------|-----------|

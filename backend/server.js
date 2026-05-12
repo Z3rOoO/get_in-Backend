@@ -27,6 +27,7 @@ import DispositivosRouter from './router/DispositivosRouter.js';
 import LogsRouter from './router/LogsRouter.js';
 import RequisicaoVisitanteRouter from './router/RequisicaoVisitanteRouter.js';
 import ViewRouter from './router/ViewRouter.js';
+import AvatarRouter from './router/AvatarRouter.js';
 
 // -------REGISTRO DAS ROTAS------- //
 
@@ -41,7 +42,17 @@ app.use('/requisicao-visitante', RequisicaoVisitanteRouter);
 app.use('/dispositivos', DispositivosRouter);
 app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
+app.use('/api/avatar', AvatarRouter);
 
+
+// Servir arquivos estáticos de uploads
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get("/health", (req, res) => {
     res.status(200).json({ ok: true });
