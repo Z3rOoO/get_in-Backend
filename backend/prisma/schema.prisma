@@ -13,7 +13,6 @@ model Usuario {
   cpf                  String               @unique @db.VarChar(14)
   celular              String?              @db.VarChar(20)
   email                String               @unique @db.VarChar(150)
-  avatar               String?              @db.VarChar(255)
   dataDeCriacao        DateTime             @default(now())
   funcionarios         Funcionario[]
   logs                 Log[]

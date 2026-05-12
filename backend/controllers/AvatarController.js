@@ -3,61 +3,63 @@ import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
 class AvatarController {
     /**
-     * Obter avatar de um usuário
+     * Obter imagem de um funcionário
      */
     static async getAvatar(req, res) {
         try {
-            const { userId } = req.params;
+            const { funcId } = req.params;
 
-            const user = await prisma.usuario.findUnique({
+            const funcionario = await prisma.funcionario.findUnique({
                 where: {
-                    id: Number(userId)
+                    id: Number(funcId)
                 },
-                select: {
-                    id: true,
-                    nome: true,
-                    avatar: true
+                include: {
+                    usuario: {
+                        select: {
+                            nome: true
+                        }
+                    }
                 }
             });
 
-            if (!user) {
+            if (!funcionario) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Usuário não encontrado"
+                    mensagem: "Funcionário não encontrado"
                 });
             }
 
-            if (!user.avatar) {
+            if (!funcionario.imagem) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Avatar não encontrado para este usuário"
+                    mensagem: "Imagem não encontrada para este funcionário"
                 });
             }
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Avatar obtido com sucesso",
+                mensagem: "Imagem obtida com sucesso",
                 data: {
-                    userId: user.id,
-                    nome: user.nome,
-                    avatar: user.avatar
+                    funcId: funcionario.id,
+                    nome: funcionario.usuario.nome,
+                    imagem: funcionario.imagem
                 }
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao obter avatar",
+                mensagem: "Erro ao obter imagem",
                 erro: e.message
             });
         }
     }
 
     /**
-     * Upload de avatar para um usuário
+     * Upload de imagem para um funcionário
      */
     static async uploadAvatar(req, res) {
         try {
-            const { userId } = req.params;
+            const { funcId } = req.params;
 
             if (!req.file) {
                 return res.status(400).json({
@@ -66,17 +68,17 @@ class AvatarController {
                 });
             }
 
-            // Verificar se o usuário existe
-            const user = await prisma.usuario.findUnique({
+            // Verificar se o funcionário existe
+            const funcionario = await prisma.funcionario.findUnique({
                 where: {
-                    id: Number(userId)
+                    id: Number(funcId)
                 }
             });
 
-            if (!user) {
+            if (!funcionario) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Usuário não encontrado"
+                    mensagem: "Funcionário não encontrado"
                 });
             }
 
@@ -84,18 +86,17 @@ class AvatarController {
             const timestamp = Date.now();
             const random = Math.round(Math.random() * 1e9);
             const fileExtension = req.file.originalname.split('.').pop();
-            const fileName = `avatar-${userId}-${timestamp}-${random}.${fileExtension}`;
+            const fileName = `func-${funcId}-${timestamp}-${random}.${fileExtension}`;
 
-            // Se o usuário já tem avatar, deletar o antigo do Supabase
-            if (user.avatar) {
+            // Se o funcionário já tem imagem, deletar a antiga do Supabase
+            if (funcionario.imagem) {
                 try {
-                    const oldFileName = user.avatar.split('/').pop();
+                    const oldFileName = funcionario.imagem.split('/').pop();
                     await supabase.storage
                         .from(BUCKET_NAME)
                         .remove([oldFileName]);
                 } catch (error) {
-                    console.error("Erro ao deletar avatar antigo:", error);
-                    // Continuar mesmo se falhar ao deletar o antigo
+                    console.error("Erro ao deletar imagem antiga:", error);
                 }
             }
 
@@ -110,7 +111,7 @@ class AvatarController {
             if (error) {
                 return res.status(500).json({
                     sucesso: false,
-                    mensagem: "Erro ao fazer upload do avatar",
+                    mensagem: "Erro ao fazer upload da imagem",
                     erro: error.message
                 });
             }
@@ -120,66 +121,72 @@ class AvatarController {
                 .from(BUCKET_NAME)
                 .getPublicUrl(fileName);
 
-            const avatarUrl = publicUrlData.publicUrl;
+            const imageUrl = publicUrlData.publicUrl;
 
-            // Salvar URL do avatar no banco de dados
-            const updatedUser = await prisma.usuario.update({
+            // Salvar URL da imagem no banco de dados (tabela funcionario, campo imagem)
+            const updatedFunc = await prisma.funcionario.update({
                 where: {
-                    id: Number(userId)
+                    id: Number(funcId)
                 },
                 data: {
-                    avatar: avatarUrl
+                    imagem: imageUrl
                 },
-                select: {
-                    id: true,
-                    nome: true,
-                    avatar: true
+                include: {
+                    usuario: {
+                        select: {
+                            nome: true
+                        }
+                    }
                 }
             });
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Avatar enviado com sucesso",
-                data: updatedUser
+                mensagem: "Imagem enviada com sucesso",
+                data: {
+                    id: updatedFunc.id,
+                    nome: updatedFunc.usuario.nome,
+                    imagem: updatedFunc.imagem
+                }
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao enviar avatar",
+                mensagem: "Erro ao enviar imagem",
                 erro: e.message
             });
         }
     }
 
     /**
-     * Deletar avatar de um usuário
+     * Deletar imagem de um funcionário
      */
     static async deleteAvatar(req, res) {
         try {
-            const { userId } = req.params;
+            const { funcId } = req.params;
 
-            const user = await prisma.usuario.findUnique({
+            const funcionario = await prisma.funcionario.findUnique({
                 where: {
-                    id: Number(userId)
+                    id: Number(funcId)
                 }
             });
 
-            if (!user) {
+            if (!funcionario) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Usuário não encontrado"
+                    mensagem: "Funcionário não encontrado"
                 });
             }
 
-            if (!user.avatar) {
+            if (!funcionario.imagem) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Este usuário não possui avatar"
+                    mensagem: "Este funcionário não possui imagem"
                 });
             }
 
             // Extrair nome do arquivo da URL
-            const fileName = user.avatar.split('/').pop();
+            const fileName = funcionario.imagem.split('/').pop();
 
             // Deletar arquivo do Supabase
             const { error } = await supabase.storage
@@ -188,72 +195,85 @@ class AvatarController {
 
             if (error) {
                 console.error("Erro ao deletar arquivo do Supabase:", error);
-                // Continuar mesmo se falhar ao deletar do storage
             }
 
-            // Atualizar usuário removendo referência ao avatar
-            const updatedUser = await prisma.usuario.update({
+            // Atualizar funcionário removendo referência à imagem
+            const updatedFunc = await prisma.funcionario.update({
                 where: {
-                    id: Number(userId)
+                    id: Number(funcId)
                 },
                 data: {
-                    avatar: null
+                    imagem: null
                 },
-                select: {
-                    id: true,
-                    nome: true,
-                    avatar: true
+                include: {
+                    usuario: {
+                        select: {
+                            nome: true
+                        }
+                    }
                 }
             });
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Avatar deletado com sucesso",
-                data: updatedUser
+                mensagem: "Imagem deletada com sucesso",
+                data: {
+                    id: updatedFunc.id,
+                    nome: updatedFunc.usuario.nome,
+                    imagem: updatedFunc.imagem
+                }
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao deletar avatar",
+                mensagem: "Erro ao deletar imagem",
                 erro: e.message
             });
         }
     }
 
     /**
-     * Obter todos os avatares de usuários
+     * Obter todas as imagens de funcionários
      */
     static async getAllAvatars(req, res) {
         try {
-            const users = await prisma.usuario.findMany({
+            const funcs = await prisma.funcionario.findMany({
                 where: {
-                    avatar: {
+                    imagem: {
                         not: null
                     }
                 },
-                select: {
-                    id: true,
-                    nome: true,
-                    avatar: true
+                include: {
+                    usuario: {
+                        select: {
+                            nome: true
+                        }
+                    }
                 }
             });
 
-            if (users.length === 0) {
+            if (funcs.length === 0) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Nenhum avatar encontrado"
+                    mensagem: "Nenhuma imagem encontrada"
                 });
             }
 
+            const data = funcs.map(f => ({
+                id: f.id,
+                nome: f.usuario.nome,
+                imagem: f.imagem
+            }));
+
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Avatares obtidos com sucesso",
-                data: users
+                mensagem: "Imagens obtidas com sucesso",
+                data: data
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao obter avatares",
+                mensagem: "Erro ao obter imagens",
                 erro: e.message
             });
         }

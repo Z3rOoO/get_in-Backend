@@ -868,14 +868,14 @@ fetch('http://localhost:3000/dispositivos/1/TAG123456', {
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/api/avatar/:userId` | Obter avatar de um usuário específico |
-| POST | `/api/avatar/:userId` | Fazer upload de avatar para um usuário |
-| DELETE | `/api/avatar/:userId` | Deletar avatar de um usuário |
-| GET | `/api/avatar/` | Listar todos os usuários com avatares |
+| GET | `/api/avatar/:funcId` | Obter imagem de um funcionário específico |
+| POST | `/api/avatar/:funcId` | Fazer upload de imagem para um funcionário |
+| DELETE | `/api/avatar/:funcId` | Deletar imagem de um funcionário |
+| GET | `/api/avatar/` | Listar todos os funcionários com imagens |
 
-#### 📌 POST `/api/avatar/:userId` - Upload de Avatar
+#### 📌 POST `/api/avatar/:funcId` - Upload de Imagem de Funcionário
 
-**Descrição:** Faz upload de uma imagem de avatar para um usuário. Se o usuário já possuir um avatar, o antigo será substituído.
+**Descrição:** Faz upload de uma imagem para um funcionário. A URL será salva no campo `imagem` da tabela `funcionarios`.
 
 **Requisição:**
 - **URL:** `http://localhost:3000/api/avatar/1`

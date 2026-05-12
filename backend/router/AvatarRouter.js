@@ -4,11 +4,10 @@ import AvatarController from "../controllers/AvatarController.js";
 
 const router = express.Router();
 
-// Configurar multer para armazenar em memória (não em disco)
+// Configurar multer para armazenar em memória
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-    // Aceitar apenas imagens
     const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
@@ -26,26 +25,26 @@ const upload = multer({
 });
 
 /**
- * GET /api/avatar/:userId
- * Obter avatar de um usuário específico
+ * GET /api/avatar/:funcId
+ * Obter imagem de um funcionário específico
  */
-router.get("/:userId", AvatarController.getAvatar);
+router.get("/:funcId", AvatarController.getAvatar);
 
 /**
- * POST /api/avatar/:userId
- * Fazer upload de avatar para um usuário
+ * POST /api/avatar/:funcId
+ * Fazer upload de imagem para um funcionário
  */
-router.post("/:userId", upload.single("avatar"), AvatarController.uploadAvatar);
+router.post("/:funcId", upload.single("avatar"), AvatarController.uploadAvatar);
 
 /**
- * DELETE /api/avatar/:userId
- * Deletar avatar de um usuário
+ * DELETE /api/avatar/:funcId
+ * Deletar imagem de um funcionário
  */
-router.delete("/:userId", AvatarController.deleteAvatar);
+router.delete("/:funcId", AvatarController.deleteAvatar);
 
 /**
  * GET /api/avatar
- * Obter todos os avatares de usuários
+ * Obter todas as imagens de funcionários
  */
 router.get("/", AvatarController.getAllAvatars);
 
