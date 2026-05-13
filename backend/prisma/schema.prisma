@@ -14,7 +14,7 @@ model Usuario {
   celular              String?              @db.VarChar(20)
   email                String               @unique @db.VarChar(150)
   dataDeCriacao        DateTime             @default(now())
-  empresa              String?              @db.VarChar(100)
+  idEmpresa            Int?
   idDep                Int?
   funcionarios         Funcionario[]
   logs                 Log[]
@@ -22,6 +22,7 @@ model Usuario {
   requisicoesDeVisitas RequisicaoDeVisita[]
   tags                 Tag[]
   departamentos        Departamento?        @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento_fkey")
+  empresas             empresas?            @relation(fields: [idEmpresa], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "empresa")
 
   @@map("usuarios")
 }
@@ -141,6 +142,12 @@ model setores {
   funcionarios_setores_idGestorTofuncionarios Funcionario?         @relation("setores_idGestorTofuncionarios", fields: [idGestor], references: [id], map: "departamentos_idGestor_fkey")
 }
 
+model empresas {
+  id       Int       @id @default(autoincrement())
+  nome     String    @db.VarChar
+  usuarios Usuario[]
+}
+
 view view_perfil_completo_usuario {
   usuario_id        Int?
   usuario_nome      String?          @db.VarChar(150)
@@ -173,6 +180,16 @@ view view_logs_detalhados {
   dataDeEntrada        DateTime?
   dataDeSaida          DateTime?
   departamento_usuario String?   @db.VarChar(100)
+}
+
+view view_portaria_visitantes {
+  id      Int?
+  nome    String?   @db.VarChar(150)
+  empresa String?   @db.VarChar
+  setor   String?   @db.VarChar(100)
+  entrada DateTime?
+  saida   DateTime?
+  status  String?
 }
 
 enum TipoFuncionario {
