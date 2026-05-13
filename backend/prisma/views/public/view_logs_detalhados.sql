@@ -18,5 +18,5 @@ FROM
       )
       LEFT JOIN funcionarios f ON ((u.id = f."idUsuario"))
     )
-    LEFT JOIN departamentos d ON ((f."idDepartamento" = d.id))
+    LEFT JOIN setores d ON ((f."idSetor" = d.id))
   );

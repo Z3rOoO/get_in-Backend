@@ -14,63 +14,61 @@ model Usuario {
   celular              String?              @db.VarChar(20)
   email                String               @unique @db.VarChar(150)
   dataDeCriacao        DateTime             @default(now())
+  empresa              String?              @db.VarChar(100)
+  idDep                Int?
   funcionarios         Funcionario[]
   logs                 Log[]
   requisicoesDeAcessos RequisicaoDeAcesso[]
   requisicoesDeVisitas RequisicaoDeVisita[]
   tags                 Tag[]
+  departamentos        Departamento?        @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento_fkey")
 
   @@map("usuarios")
 }
 
 model Departamento {
-  id                   Int                  @id @default(autoincrement())
-  nome                 String               @unique @db.VarChar(100)
-  idGestor             Int?
-  dataDeCriacao        DateTime             @default(now())
-  gestor               Funcionario?         @relation("GestorDepartamento", fields: [idGestor], references: [id])
-  dispositivos         Dispositivo[]
-  funcionarios         Funcionario[]        @relation("FuncionarioDepartamento")
-  requisicoesDeAcessos RequisicaoDeAcesso[]
-  requisicoesDeVisitas RequisicaoDeVisita[]
+  id           Int           @id(map: "departamentos_pkey1") @default(autoincrement())
+  nome         String        @db.VarChar(100)
+  rua          String?       @db.VarChar(300)
+  UF           String?       @db.VarChar(2)
+  cidade       String?       @db.VarChar(300)
+  numero       String?       @db.VarChar(10)
+  CEP          String?       @db.VarChar(9)
+  tel          String?       @db.VarChar(16)
+  id_ger       Int?
+  dispositivos Dispositivo[]
+  setores      setores[]
+  usuarios     Usuario[]
 
   @@map("departamentos")
 }
 
 model Funcionario {
-  id               Int             @id @default(autoincrement())
-  idUsuario        Int
-  idDepartamento   Int
-  tipo             TipoFuncionario @default(func)
-  dataDeNascimento DateTime?       @db.Date
-  imagem           String?         @db.VarChar(255)
-  senhaHash        String          @db.VarChar(255)
-  dataDeCriacao    DateTime        @default(now())
-  gestao           Departamento[]  @relation("GestorDepartamento")
-  departamento     Departamento    @relation("FuncionarioDepartamento", fields: [idDepartamento], references: [id])
-  usuario          Usuario         @relation(fields: [idUsuario], references: [id])
+  id                                     Int             @id @default(autoincrement())
+  idUsuario                              Int
+  idSetor                                Int?
+  tipo                                   TipoFuncionario @default(func)
+  dataDeNascimento                       DateTime?       @db.Date
+  imagem                                 String?         @db.VarChar(255)
+  senhaHash                              String          @db.VarChar(255)
+  dataDeCriacao                          DateTime        @default(now())
+  setores_funcionarios_idSetorTosetores  setores?        @relation("funcionarios_idSetorTosetores", fields: [idSetor], references: [id], onDelete: Restrict)
+  usuario                                Usuario         @relation(fields: [idUsuario], references: [id])
+  setores_setores_idGestorTofuncionarios setores[]       @relation("setores_idGestorTofuncionarios")
 
   @@map("funcionarios")
 }
 
-model Cracha {
-  id     Int          @id @default(autoincrement())
-  status StatusCracha @default(disponivel)
-  tags   Tag[]
-
-  @@map("crachas")
-}
-
 model Tag {
-  id            Int       @id @default(autoincrement())
-  idUsuario     Int
-  idCracha      Int
-  codigoTag     String    @unique @db.VarChar(100)
-  temporario    Boolean   @default(false)
-  validade      DateTime?
-  dataDeCriacao DateTime  @default(now())
-  cracha        Cracha    @relation(fields: [idCracha], references: [id])
-  usuario       Usuario   @relation(fields: [idUsuario], references: [id])
+  id              Int           @id @default(autoincrement())
+  idUsuario       Int?
+  status          StatusCracha?
+  codigoTag       String        @unique @db.VarChar(100)
+  temporario      Boolean       @default(false)
+  validade        DateTime?
+  dataDeCriacao   DateTime      @default(now())
+  dataDeDevolucao DateTime?     @db.Timestamp(6)
+  usuario         Usuario?      @relation(fields: [idUsuario], references: [id], onDelete: Restrict)
 
   @@map("tags")
 }
@@ -78,10 +76,10 @@ model Tag {
 model RequisicaoDeAcesso {
   id               Int              @id @default(autoincrement())
   idUsuario        Int
-  idDepartamento   Int
+  idSetor          Int
   status           StatusRequisicao @default(pendente)
   dataDaRequisicao DateTime         @default(now())
-  departamento     Departamento     @relation(fields: [idDepartamento], references: [id])
+  setores          setores          @relation(fields: [idSetor], references: [id], map: "requisicoes_de_acessos_idDepartamento_fkey")
   usuario          Usuario          @relation(fields: [idUsuario], references: [id])
 
   @@map("requisicoes_de_acessos")
@@ -89,11 +87,13 @@ model RequisicaoDeAcesso {
 
 model Dispositivo {
   id             Int          @id @default(autoincrement())
-  idDepartamento Int
+  idSetor        Int
   local          String?      @db.VarChar(150)
   dataManutencao DateTime?
   dataDeCriacao  DateTime     @default(now())
-  departamento   Departamento @relation(fields: [idDepartamento], references: [id])
+  idDep          Int
+  departamentos  Departamento @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento")
+  setores        setores      @relation(fields: [idSetor], references: [id])
   logs           Log[]
 
   @@map("dispositivos")
@@ -102,14 +102,14 @@ model Dispositivo {
 model RequisicaoDeVisita {
   id               Int              @id @default(autoincrement())
   idUsuario        Int
-  idDepartamento   Int
+  idSetor          Int
   status           StatusRequisicao @default(pendente)
   motivo           String?          @db.VarChar(255)
   validade         DateTime?
   dataDaRequisicao DateTime         @default(now())
   descricao        String?
   empresa          String?          @db.VarChar(150)
-  departamento     Departamento     @relation(fields: [idDepartamento], references: [id])
+  setores          setores          @relation(fields: [idSetor], references: [id], map: "requisicoes_de_visitas_idDepartamento_fkey")
   usuario          Usuario          @relation(fields: [idUsuario], references: [id])
 
   @@map("requisicoes_de_visitas")
@@ -127,6 +127,20 @@ model Log {
   @@map("logs")
 }
 
+model setores {
+  id                                          Int                  @id(map: "departamentos_pkey") @default(autoincrement())
+  nome                                        String               @unique(map: "departamentos_nome_key") @db.VarChar(100)
+  idGestor                                    Int?
+  dataDeCriacao                               DateTime             @default(now())
+  idDep                                       Int?
+  dispositivos                                Dispositivo[]
+  funcionarios_funcionarios_idSetorTosetores  Funcionario[]        @relation("funcionarios_idSetorTosetores")
+  requisicoes_de_acessos                      RequisicaoDeAcesso[]
+  requisicoes_de_visitas                      RequisicaoDeVisita[]
+  departamentos                               Departamento?        @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento")
+  funcionarios_setores_idGestorTofuncionarios Funcionario?         @relation("setores_idGestorTofuncionarios", fields: [idGestor], references: [id], map: "departamentos_idGestor_fkey")
+}
+
 view view_perfil_completo_usuario {
   usuario_id        Int?
   usuario_nome      String?          @db.VarChar(150)
@@ -138,16 +152,6 @@ view view_perfil_completo_usuario {
   foto_perfil       String?          @db.VarChar(255)
   departamento_nome String?          @db.VarChar(100)
   dataDeCriacao     DateTime?
-}
-
-view view_status_acesso_atual {
-  codigoTag              String?       @db.VarChar(100)
-  usuario_id             Int?
-  usuario_nome           String?       @db.VarChar(150)
-  status_cracha          StatusCracha?
-  temporario             Boolean?
-  validade_tag           DateTime?
-  departamento_vinculado String?       @db.VarChar(100)
 }
 
 view view_central_requisicoes {

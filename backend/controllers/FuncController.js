@@ -91,13 +91,13 @@ class FuncController {
 
     static async Create(req, res) {
         try {
-            const { idUsuario, idDepartamento, tipo, dataDeNascimento, imagem, senha } = req.body
+            const { idUsuario, idSetor, tipo, dataDeNascimento, imagem, senha } = req.body
 
             const senhaHash = await hashPassword(senha) // cria um hash da senha usando a função hashPassword do database.js
 
             const newFunc = {
                 idUsuario,
-                idDepartamento,
+                idSetor,
                 tipo,
                 dataDeNascimento,
                 imagem,
@@ -124,13 +124,13 @@ class FuncController {
     static async Update(req, res) {
         try {
             const { id } = req.params
-            const { idUsuario, idDepartamento, tipo, dataDeNascimento, imagem, senha } = req.body
+            const { idUsuario, idSetor, tipo, dataDeNascimento, imagem, senha } = req.body
 
             const senhaHash = await hashPassword(senha) // cria um hash da senha usando a função hashPassword do database.js
 
             const updatedFunc = {
                 idUsuario,
-                idDepartamento,
+                idSetor,
                 tipo,
                 dataDeNascimento,
                 imagem,

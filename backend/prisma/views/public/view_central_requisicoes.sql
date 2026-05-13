@@ -1,7 +1,7 @@
 SELECT
   requisicoes_de_acessos.id,
   requisicoes_de_acessos."idUsuario",
-  requisicoes_de_acessos."idDepartamento",
+  requisicoes_de_acessos."idSetor" AS "idDepartamento",
   requisicoes_de_acessos.status,
   requisicoes_de_acessos."dataDaRequisicao",
   'Acesso Interno' :: text AS tipo_requisicao,
@@ -14,7 +14,7 @@ ALL
 SELECT
   requisicoes_de_visitas.id,
   requisicoes_de_visitas."idUsuario",
-  requisicoes_de_visitas."idDepartamento",
+  requisicoes_de_visitas."idSetor" AS "idDepartamento",
   requisicoes_de_visitas.status,
   requisicoes_de_visitas."dataDaRequisicao",
   'Visita Externa' :: text AS tipo_requisicao,
