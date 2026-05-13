@@ -5,7 +5,7 @@ class UserController {
 
     static async Read(req, res) {
         try {
-            const user = await prisma.usuario.findMany(); // lê os usuários da tabela "usuarios" usando a função read do database.js
+            const user = await prisma.usuario.findMany(); // lê os usuários da tabela "usuarios"
             if(user.length === 0) {
                 return res.status(404).json({
                     sucesso: false,
@@ -29,12 +29,12 @@ class UserController {
 
     static async ReadId(req, res) {
         try {
-            const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
+            const { id } = req.params; 
             const user = await prisma.usuario.findUnique({
                 where: {
                     id: Number(id)
                 }
-            }); // le o usuário da tabela "usuarios" usando a função read do database.js, filtrando pelo ID
+            }); 
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
@@ -50,14 +50,14 @@ class UserController {
     }
     static async ReadName(req, res) {
         try {
-            const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
+            const { nome } = req.params; 
             const user = await prisma.usuario.findMany({
                 where: {
                     nome: {
-                        contains: id
+                        contains: nome
                     }
                 }
-            }); // le o usuário da tabela "usuarios" usando a função read do database.js, filtrando pelo nome
+            }); 
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
@@ -73,14 +73,14 @@ class UserController {
     }
     static async ReadCpf(req, res) {
         try {
-            const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
+            const { cpf } = req.params; 
             const user = await prisma.usuario.findMany({
                 where: {
                     cpf: {
-                        contains: id
+                        contains: cpf
                     }
                 }
-            }); // le o usuário da tabela "usuarios" usando a função read do database.js, filtrando pelo CPF
+            }); 
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário lido com sucesso",
@@ -97,16 +97,18 @@ class UserController {
 
     static async Create(req, res) {
         try {
-            const { nome, cpf, cel, email } = req.body; // obtém os dados do usuário a partir do corpo da requisição    
+            const { nome, cpf, cel, email, empresa, idDep } = req.body; 
             const data = {
                 nome: nome,
                 cpf: cpf,
                 celular: cel,
-                email: email
+                email: email,
+                empresa: empresa,
+                idDep: idDep ? Number(idDep) : null
             }
             const result = await prisma.usuario.create({
                 data: data
-            }) // cria um novo usuário na tabela "usuarios" usando a função create do database.js
+            }) 
             return res.status(201).json({
                 sucesso: true,
                 mensagem: "Usuário criado com sucesso",
@@ -122,14 +124,16 @@ class UserController {
         }
     }
 
-    static async Update(req, res) {// implementa mudanças em um usuário existente
-        const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
-        const { nome, cpf, cel, email } = req.body; // obtém os dados atualizados do usuário a partir do corpo da requisição
+    static async Update(req, res) {
+        const { id } = req.params; 
+        const { nome, cpf, cel, email, empresa, idDep } = req.body; 
         const data = {
             nome: nome,
             cpf: cpf,
             celular: cel,
-            email: email
+            email: email,
+            empresa: empresa,
+            idDep: idDep ? Number(idDep) : undefined
         }
         try {
             const result = await prisma.usuario.update({
@@ -137,7 +141,7 @@ class UserController {
                     id: Number(id)
                 },
                 data: data
-            }) // atualiza o usuário na tabela "usuarios" usando a função update do database.js, filtrando pelo ID
+            }) 
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário atualizado com sucesso",
@@ -152,14 +156,14 @@ class UserController {
         }
     }
 
-    static async Delete(req, res) { // remove um usuário existente
-        const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
+    static async Delete(req, res) { 
+        const { id } = req.params; 
         try {
             const result = await prisma.usuario.delete({
                 where: {
                     id: Number(id)
                 }
-            }) // deleta o usuário da tabela "usuarios" usando a função delete do database.js, filtrando pelo ID    
+            }) 
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Usuário deletado com sucesso",

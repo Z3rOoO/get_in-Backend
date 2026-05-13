@@ -3,15 +3,12 @@ import { prisma } from '../config/prisma.js';
 
 class RequisicaoFuncionarioController {
     static async Create(req, res) {
-        //     idUsuario INT NOT NULL,
-        // idDepartamento INT NOT NULL,
-        // status ENUM('pendente','aprovado','recusado') DEFAULT 'pendente',
         try {
-            const { idUsuario, idDepartamento } = req.body
+            const { idUsuario, idSetor } = req.body
 
             const dado = {
-                idUsuario,
-                idDepartamento
+                idUsuario: Number(idUsuario),
+                idSetor: Number(idSetor)
             }
 
             const result = await prisma.requisicaoDeAcesso.create({
@@ -33,7 +30,7 @@ class RequisicaoFuncionarioController {
 
     static async Read(req, res) {
         try {
-            const result = await prisma.requisicaoDeAcesso.findMany() //le as requisições da tabela "requisicoesDeAcessos"
+            const result = await prisma.requisicaoDeAcesso.findMany() 
             if (result.length === 0) {
                 return res.status(404).json({
                     sucesso: false,
@@ -117,9 +114,6 @@ class RequisicaoFuncionarioController {
         try {
             const { id } = req.params
             const { status } = req.body
-            const data = {
-                status
-            }
             const result = await prisma.requisicaoDeAcesso.update({
                 where: {
                     id: Number(id)
@@ -167,24 +161,24 @@ class RequisicaoFuncionarioController {
         }
     }
 
-    static async ReadByDepartamento(req, res) {
+    static async ReadBySetor(req, res) {
         try {
             const { id } = req.params
-            const departamento = await prisma.requisicaoDeAcesso.findMany({
+            const result = await prisma.requisicaoDeAcesso.findMany({
                 where: {
-                    idDepartamento: Number(id)
+                    idSetor: Number(id)
                 }
             })
-            if (departamento.length === 0) {
+            if (result.length === 0) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Nenhuma requisição encontrada para esse departamento"
+                    mensagem: "Nenhuma requisição encontrada para esse setor"
                 })
             }
             res.status(200).json({
                 sucesso: true,
                 mensagem: "Requisições listadas com sucesso",
-                data: departamento
+                data: result
             })
         }
         catch (e) {

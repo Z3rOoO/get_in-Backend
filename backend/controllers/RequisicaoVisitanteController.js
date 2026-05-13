@@ -4,21 +4,23 @@ import { prisma } from '../config/prisma.js';
 class RequisicaoVisitanteController {
     static async Create(req, res) {
         try {
-            const { idUsuario, idDepartamento, motivo, validade } = req.body;
+            const { idUsuario, idSetor, motivo, validade, descricao, empresa } = req.body;
 
-            if (!idUsuario || !idDepartamento) {
+            if (!idUsuario || !idSetor) {
                 return res.status(400).json({
                     sucesso: false,
-                    mensagem: "idUsuario e idDepartamento são obrigatórios"
+                    mensagem: "idUsuario e idSetor são obrigatórios"
                 });
             }
 
             const resultado = await prisma.requisicaoDeVisita.create({
                 data: {
                     idUsuario: Number(idUsuario),
-                    idDepartamento: Number(idDepartamento),
+                    idSetor: Number(idSetor),
                     motivo: motivo || null,
-                    validade: validade || null,
+                    validade: validade ? new Date(validade) : null,
+                    descricao: descricao || null,
+                    empresa: empresa || null,
                     status: "pendente"
                 }
             });
@@ -42,7 +44,7 @@ class RequisicaoVisitanteController {
             const resultado = await prisma.requisicaoDeVisita.findMany({
                 include: {
                     usuario: true,
-                    departamento: true
+                    setores: true
                 }
             });
 
@@ -68,7 +70,7 @@ class RequisicaoVisitanteController {
                 where: { id: Number(id) },
                 include: {
                     usuario: true,
-                    departamento: true
+                    setores: true
                 }
             });
 
@@ -96,14 +98,16 @@ class RequisicaoVisitanteController {
     static async Update(req, res) {
         try {
             const { id } = req.params;
-            const { status, motivo, validade } = req.body;
+            const { status, motivo, validade, descricao, empresa } = req.body;
 
             const resultado = await prisma.requisicaoDeVisita.update({
                 where: { id: Number(id) },
                 data: {
                     status: status || undefined,
                     motivo: motivo || undefined,
-                    validade: validade || undefined
+                    validade: validade ? new Date(validade) : undefined,
+                    descricao: descricao || undefined,
+                    empresa: empresa || undefined
                 }
             });
 
