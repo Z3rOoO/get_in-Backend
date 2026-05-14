@@ -54,12 +54,12 @@ class DepartamentoController {
             if(departamento) {
                 return res.status(400).json({
                     sucesso: false,
-                    mensagem: "Setor já existe"
+                    mensagem: "Departamento já existe"
                 })
             }
 
             // CRIA O DEPARTAMENTO 
-            await prisma.setores.create({
+            await prisma.departamento.create({
                 data: {
                     nome: nome,
                     idGestor: idGestor
@@ -68,14 +68,14 @@ class DepartamentoController {
             
             res.status(200).json({
                 sucesso: true,
-                mensagem: `Criado o setor ${nome} com sucesso!`
+                mensagem: `Criado o departamento ${nome} com sucesso!`
             })
 
         }
         catch(e) {
             res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao criar um setor",
+                mensagem: "Erro ao criar um departamento",
                 erro: e.message
             })
         }
