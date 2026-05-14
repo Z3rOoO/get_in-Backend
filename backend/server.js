@@ -28,6 +28,7 @@ import LogsRouter from './router/LogsRouter.js';
 import RequisicaoVisitanteRouter from './router/RequisicaoVisitanteRouter.js';
 import ViewRouter from './router/ViewRouter.js';
 import AvatarRouter from './router/AvatarRouter.js';
+import EmpresasRouter from './router/EmpresasRouter.js';
 
 // -------REGISTRO DAS ROTAS------- //
 
@@ -43,6 +44,7 @@ app.use('/dispositivos', DispositivosRouter);
 app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
 app.use('/api/avatar', AvatarRouter);
+app.use('/empresas', EmpresasRouter);
 
 
 app.get("/health", (req, res) => {

@@ -97,12 +97,13 @@ class UserController {
 
     static async Create(req, res) {
         try {
-            const { nome, cpf, cel, email } = req.body; // obtém os dados do usuário a partir do corpo da requisição    
+            const { nome, cpf, cel, celular, email, empresa } = req.body; // obtém os dados do usuário a partir do corpo da requisição    
             const data = {
                 nome: nome,
                 cpf: cpf,
-                celular: cel,
-                email: email
+                celular: cel || celular,
+                email: email,
+                empresa: empresa
             }
             const result = await prisma.usuario.create({
                 data: data
@@ -124,12 +125,13 @@ class UserController {
 
     static async Update(req, res) {// implementa mudanças em um usuário existente
         const { id } = req.params; // obtém o ID do usuário a partir dos parâmetros da rota
-        const { nome, cpf, cel, email } = req.body; // obtém os dados atualizados do usuário a partir do corpo da requisição
+        const { nome, cpf, cel, celular, email, empresa } = req.body; // obtém os dados atualizados do usuário a partir do corpo da requisição
         const data = {
             nome: nome,
             cpf: cpf,
-            celular: cel,
-            email: email
+            celular: cel || celular,
+            email: email,
+            empresa: empresa
         }
         try {
             const result = await prisma.usuario.update({
