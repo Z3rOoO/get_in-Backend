@@ -1,6 +1,6 @@
 # 🏢 GET IN - Backend API Documentation
 
-Documentação completa da API Backend do sistema **GET IN**, uma solução robusta para controle de acessos, gestão de funcionários e visitantes em ambientes corporativos.
+Documentação completa da API Backend do sistema **GET IN**, uma solução para controle de acessos, gestão de usuários, funcionários, visitantes, crachás, tags RFID, dispositivos e logs em ambientes corporativos.
 
 ---
 
@@ -20,87 +20,115 @@ Documentação completa da API Backend do sistema **GET IN**, uma solução robu
   - [💳 Crachás (`/cracha`)](#-crachás-cracha)
   - [🏷️ Tags RFID (`/tags`)](#️-tags-rfid-tags)
   - [📥 Requisições de Acesso (`/requisicao`)](#-requisições-de-acesso-requisicao)
+  - [🧾 Requisições de Visitante (`/requisicao-visitante`)](#-requisições-de-visitante-requisicao-visitante)
   - [🚪 Dispositivos (`/dispositivos`)](#-dispositivos-dispositivos)
   - [📜 Logs de Acesso (`/logs`)](#-logs-de-acesso-logs)
-- [🖼️ Avatares (`/avatar`)](#️-avatares-apiavatar)
+  - [🖼️ Avatares (`/avatar`)](#️-avatares-avatar)
+  - [📊 Views Consolidadas (`/views`)](#-views-consolidadas-views)
+  - [🛂 Portaria (`/portaria`)](#-portaria-portaria)
 - [Modelos de Dados (Prisma)](#modelos-de-dados-prisma)
 - [Códigos de Resposta](#códigos-de-resposta)
+- [Notas Técnicas](#notas-técnicas)
 
 ---
 
 ## Visão Geral
 
-O **GET IN** é um sistema de backend desenvolvido para gerenciar o fluxo de pessoas em organizações. Ele permite o controle granular de quem pode acessar determinados departamentos, utilizando dispositivos de leitura de tags/crachás e um sistema de requisições de acesso.
+O **GET IN** é um backend desenvolvido para gerenciar o fluxo de pessoas em organizações. A API centraliza cadastros de usuários e funcionários, requisições de acesso interno, requisições de visitantes, vínculos com tags RFID, dispositivos de validação, registros de entrada e saída, além de consultas consolidadas para telas administrativas e de portaria.
 
 ### Principais Funcionalidades:
-- **Gestão de Identidade:** Cadastro de usuários e funcionários com diferentes níveis de acesso (ADM, GER, SUP, PORT, FUNC).
-- **Controle de Acesso:** Vinculação de tags RFID a usuários e validação de permissões por departamento.
-- **Workflow de Requisições:** Sistema de solicitação e aprovação de acesso para funcionários e visitantes.
-- **Monitoramento:** Registro detalhado de logs de entrada e saída por dispositivo e usuário.
+
+- **Gestão de Identidade:** cadastro e manutenção de usuários, funcionários e visitantes.
+- **Controle de Acesso:** validação por tag RFID, crachá, setor/departamento e status de requisição.
+- **Workflow de Requisições:** criação, aprovação, recusa e acompanhamento de solicitações de acesso interno e visita externa.
+- **Monitoramento:** registro de logs por usuário e dispositivo, com views consolidadas para consulta analítica.
+- **Upload de Avatar:** integração com Supabase Storage para armazenar imagens de funcionários.
+- **Integração com Dispositivos:** suporte a comunicação MQTT para retorno de autorização aos dispositivos físicos.
 
 ---
 
 ## Stack Tecnológica
 
-| Componente               | Tecnologia              |
-| ------------------------ | ----------------------- |
-| **Ambiente de Execução** | Node.js                 |
-| **Framework Web**        | Express.js              |
-| **Linguagem**            | JavaScript (ES Modules) |
-| **ORM**                  | Prisma                  |
-| **Banco de Dados**       | PostgreSQL              |
-| **Autenticação**         | JWT (JSON Web Tokens)   |
-| **Criptografia**         | bcryptjs                |
+| Componente | Tecnologia |
+| --- | --- |
+| **Ambiente de Execução** | Node.js |
+| **Framework Web** | Express.js |
+| **Linguagem** | JavaScript (ES Modules) |
+| **ORM** | Prisma |
+| **Banco de Dados** | PostgreSQL |
+| **Autenticação** | JWT (JSON Web Tokens) |
+| **Criptografia de Senha** | bcrypt |
+| **Upload de Arquivos** | Multer |
+| **Storage de Imagens** | Supabase Storage |
+| **Comunicação com Dispositivos** | MQTT |
+| **CORS** | cors |
 
 ---
 
 ## Pré-requisitos
 
-- **Node.js** (v16 ou superior recomendado)
-- **PostgreSQL** (ou outro banco suportado pelo Prisma)
-- **Gerenciador de pacotes** (npm ou yarn)
+Para executar o projeto localmente, é necessário possuir **Node.js**, **npm**, acesso a um banco **PostgreSQL** e as credenciais de ambiente utilizadas pela aplicação. O projeto também possui integração opcional com **Supabase Storage** para avatares e com broker **MQTT** para comunicação com dispositivos.
+
+| Recurso | Recomendação |
+| --- | --- |
+| **Node.js** | v18 ou superior |
+| **npm** | versão compatível com o Node instalado |
+| **PostgreSQL** | instância local ou remota acessível via `DATABASE_URL` |
+| **Supabase** | projeto e bucket configurados para upload de imagens |
+| **MQTT** | acesso ao broker configurado no código quando usar validação por dispositivo |
 
 ---
 
 ## Instalação e Configuração
 
 ### 1. Clonar o Repositório
+
 ```bash
 git clone https://github.com/Z3rOoO/get_in-Backend.git
 cd get_in-Backend/backend
 ```
 
 ### 2. Instalar Dependências
+
 ```bash
 npm install
 ```
 
 ### 3. Variáveis de Ambiente
-Crie um arquivo `.env` na pasta `backend/` baseando-se no `.env.example`:
+
+Crie um arquivo `.env` dentro da pasta `backend/`. O repositório mantém um arquivo de referência chamado `dotenvexample`; ajuste os valores conforme o ambiente utilizado.
+
 ```env
-PORT=3000
-DATABASE_URL="postgresql://user:password@localhost:5432/get_in_db?schema=public"
-JWT_SECRET="sua_chave_secreta_aqui"
-JWT_EXPIRES_IN="7d"
+PORT=8080
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/get_in_db?schema=public"
+JWT_SECRET="segredo_muito_dificil"
+JWT_EXPIRES_IN="9h"
 
 # Supabase Storage
-SUPABASE_URL="https://dmlshwvpsoqpptjmplfq.supabase.co"
+SUPABASE_URL="https://seu-projeto.supabase.co"
 SUPABASE_KEY="sua_chave_do_supabase"
 ```
 
-### 4. Migrações do Banco de Dados
+> **Observação:** o arquivo `dotenvexample` ainda contém variáveis legadas de conexão MySQL. A configuração ativa do Prisma utiliza `DATABASE_URL` com provider `postgresql`, conforme definido em `backend/prisma/schema.prisma` e `backend/config/prisma.js`.
+
+### 4. Configurar o Banco de Dados
+
+Após configurar a variável `DATABASE_URL`, aplique as migrations ou sincronize o schema, de acordo com o fluxo de desenvolvimento adotado pela equipe.
+
 ```bash
-npx prisma migrate dev --name init
+npx prisma migrate dev
+npx prisma generate
 ```
 
 ### 5. Iniciar o Servidor
-```bash
-# Modo desenvolvimento
-npm run dev
 
-# Modo produção
-npm start
+O `package.json` atual não define scripts `dev` ou `start`. Portanto, em ambiente local, o servidor pode ser iniciado diretamente pelo arquivo principal.
+
+```bash
+node server.js
 ```
+
+Por padrão, a API utiliza a porta definida em `PORT`. Caso a variável não seja informada, o servidor usa a porta `3000`.
 
 ---
 
@@ -108,23 +136,27 @@ npm start
 
 ```text
 backend/
-├── config/         # Configurações de banco e Prisma
-├── controllers/    # Lógica de negócio (regras e processamento)
-├── middleware/     # Middlewares (ex: AuthMiddleware)
-├── prisma/         # Schema do banco de dados e migrações
+├── config/         # Configurações de Prisma, Supabase, MQTT e utilitários
+├── controllers/    # Lógica das rotas e regras de negócio
+├── middleware/     # Middlewares, incluindo autenticação JWT
+├── prisma/         # Schema, migrations e views SQL
 ├── router/         # Definição das rotas da API
-└── server.js       # Ponto de entrada da aplicação
+├── dotenvexample   # Exemplo de variáveis de ambiente
+├── package.json    # Dependências e metadados do backend
+└── server.js       # Ponto de entrada da aplicação Express
 ```
 
 ---
 
 ## Autenticação
 
-A maioria das rotas exige autenticação via **JWT**.
-1. Realize o login em `/auth/login`.
-2. Capture o `token` retornado.
-3. Envie o token em todas as requisições protegidas no Header:
-   `Authorization: Bearer <SEU_TOKEN_AQUI>`
+A maioria das rotas exige autenticação via **JWT**. O fluxo recomendado é realizar login em `/auth/login`, capturar o token retornado e enviá-lo nas requisições protegidas por meio do header `Authorization`.
+
+```http
+Authorization: Bearer <SEU_TOKEN_JWT>
+```
+
+Quando o token não é enviado, está em formato inválido ou está expirado, o middleware retorna `401 Unauthorized`. As rotas públicas principais são as de autenticação e a validação de crachá do dispositivo, enquanto as demais rotas administrativas são protegidas no router.
 
 ---
 
@@ -132,59 +164,32 @@ A maioria das rotas exige autenticação via **JWT**.
 
 ### 🔐 Autenticação (`/auth`)
 
-| Método | Rota          | Descrição                                                  |
-| ------ | ------------- | ---------------------------------------------------------- |
-| POST   | `/auth/`      | Registrar um novo funcionário (Cria Usuário + Funcionário) |
-| POST   | `/auth/login` | Autenticar e receber token JWT                             |
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| POST | `/auth/` | Não | Registrar usuário e funcionário associado |
+| POST | `/auth/login` | Não | Autenticar usuário e retornar token JWT |
 
 #### 📌 POST `/auth/` - Registrar novo funcionário
 
-**Descrição:** Cria uma nova conta de usuário e um registro de funcionário associado no sistema.
+**Descrição:** cria um usuário quando ele ainda não existe e, em seguida, cria o registro de funcionário associado. Caso o usuário já exista, o endpoint reutiliza o `id` do usuário encontrado por CPF ou e-mail e valida se ele ainda não possui cadastro funcional.
 
 **Requisição:**
-- **URL:** `http://localhost:3000/auth/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  ```
-- **Body:**
-  ```json
-  {
-    "nome": "João Silva",
-    "cpf": "12345678901",
-    "celular": "(11) 98765-4321",
-    "email": "joao.silva@example.com",
-    "idDepartamento": 1, // ID de um departamento existente
-    "tipo": "func",      // Tipo de funcionário (func, port, sup, ger, adm)
-    "dataDeNascimento": "1990-01-01",
-    "senha": "senha_segura_123"
-  }
-  ```
 
-**Exemplo `fetch`:**
-```javascript
-fetch('http://localhost:3000/auth/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    nome: 'João Silva',
-    cpf: '12345678901',
-    celular: '(11) 98765-4321',
-    email: 'joao.silva@example.com',
-    idDepartamento: 1,
-    tipo: 'func',
-    dataDeNascimento: '1990-01-01',
-    senha: 'senha_segura_123',
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+```json
+{
+  "nome": "João Silva",
+  "cpf": "12345678901",
+  "celular": "(11) 98765-4321",
+  "email": "joao.silva@example.com",
+  "tipo": "func",
+  "dataDeNascimento": "1990-01-01",
+  "imagem": null,
+  "senha": "senha_segura_123"
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
@@ -200,70 +205,33 @@ fetch('http://localhost:3000/auth/', {
     "funcionario": {
       "id": 1,
       "idUsuario": 1,
-      "idDepartamento": 1,
+      "idSetor": null,
       "tipo": "func",
       "dataDeNascimento": "1990-01-01T00:00:00.000Z",
-      "imagem": null,
-      "senhaHash": "$2a$10$...
+      "imagem": null
     }
   }
 }
 ```
 
-**Resposta de Erro (400 Bad Request - Exemplo):**
+#### 📌 POST `/auth/login` - Autenticar usuário
+
+**Descrição:** valida e-mail e senha do funcionário, gerando um token JWT para acesso às rotas protegidas.
+
+**Requisição:**
+
 ```json
 {
-  "sucesso": false,
-  "mensagem": "Usuário já é funcionário"
+  "email": "joao.silva@example.com",
+  "senha": "senha_segura_123"
 }
 ```
 
----
-
-#### 📌 POST `/auth/login` - Autenticar usuário
-
-**Descrição:** Autentica um usuário e retorna um token JWT para ser usado em requisições subsequentes.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/auth/login`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  ```
-- **Body:**
-  ```json
-  {
-    "email": "joao.silva@example.com",
-    "senha": "senha_segura_123"
-  }
-  ```
-
-**Exemplo `fetch`:**
-```javascript
-fetch('http://localhost:3000/auth/login', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email: 'joao.silva@example.com',
-    senha: 'senha_segura_123',
-  }),
-})
-.then(response => response.json())
-.then(data => {
-  console.log(data);
-  if (data.sucesso) {
-    localStorage.setItem('jwtToken', data.token); // Armazena o token
-  }
-})
-.catch(error => console.error('Erro:', error));
-```
-
 **Resposta Esperada (200 OK):**
+
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // Seu token JWT
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "sucesso": true,
   "mensagem": "login bem-sucedido",
   "data": {
@@ -271,148 +239,55 @@ fetch('http://localhost:3000/auth/login', {
     "nome": "João Silva",
     "cpf": "12345678901",
     "celular": "(11) 98765-4321",
-    "email": "joao.silva@example.com",
-    "dataDeCriacao": "2026-04-29T10:00:00.000Z"
+    "email": "joao.silva@example.com"
   }
-}
-```
-
-**Resposta de Erro (401 Unauthorized - Exemplo):**
-```json
-{
-  "sucesso": false,
-  "mensagem": "Senha incorreta"
 }
 ```
 
 ---
 
 ### 👥 Usuários (`/user`)
-*Gerencia os dados básicos de identificação das pessoas.*
 
-| Método | Rota               | Descrição                                 |
-| ------ | ------------------ | ----------------------------------------- |
-| GET    | `/user/`           | Listar todos os usuários                  |
-| GET    | `/user/:id`        | Buscar usuário por ID                     |
-| GET    | `/user/name/:nome` | Buscar usuários por nome (filtro parcial) |
-| GET    | `/user/cpf/:cpf`   | Buscar usuário por CPF                    |
-| POST   | `/user/`           | Criar um usuário simples                  |
-| PUT    | `/user/:id`        | Atualizar dados do usuário                |
-| DELETE | `/user/:id`        | Remover usuário                           |
+Gerencia os dados básicos de identificação de usuários, incluindo funcionários e visitantes.
 
-#### 📌 GET `/user/` - Listar todos os usuários
-
-**Descrição:** Retorna uma lista de todos os usuários cadastrados no sistema.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/user/`
-- **Headers:**
-  ```
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken'); // Obtém o token armazenado
-
-fetch('http://localhost:3000/user/', {
-  method: 'GET',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-  },
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
-
-**Resposta Esperada (200 OK):**
-```json
-[
-  {
-    "id": 1,
-    "nome": "João Silva",
-    "cpf": "12345678901",
-    "celular": "(11) 98765-4321",
-    "email": "joao.silva@example.com",
-    "dataDeCriacao": "2026-04-29T10:00:00.000Z"
-  },
-  {
-    "id": 2,
-    "nome": "Maria Souza",
-    "cpf": "98765432109",
-    "celular": "(11) 91234-5678",
-    "email": "maria.souza@example.com",
-    "dataDeCriacao": "2026-04-29T10:05:00.000Z"
-  }
-]
-```
-
-**Resposta de Erro (401 Unauthorized - Exemplo):**
-```json
-{
-  "sucesso": false,
-  "mensagem": "Token inválido ou expirado"
-}
-```
-
----
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/user/` | Sim | Listar todos os usuários |
+| GET | `/user/:id` | Sim | Buscar usuário por ID |
+| GET | `/user/name/:nome` | Sim | Buscar usuários por nome parcial |
+| GET | `/user/cpf/:cpf` | Sim | Buscar usuários por CPF parcial |
+| POST | `/user/` | Sim | Criar usuário simples |
+| PUT | `/user/:id` | Sim | Atualizar dados do usuário |
+| DELETE | `/user/:id` | Sim | Remover usuário |
 
 #### 📌 POST `/user/` - Criar um usuário simples
 
-**Descrição:** Cria um novo registro de usuário no sistema sem vinculá-lo a um funcionário.
-
 **Requisição:**
-- **URL:** `http://localhost:3000/user/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "nome": "Carlos Pereira",
-    "cpf": "11122233344",
-    "cel": "(11) 99999-8888",
-    "email": "carlos.pereira@example.com"
-  }
-  ```
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/user/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    nome: 'Carlos Pereira',
-    cpf: '11122233344',
-    cel: '(11) 99999-8888',
-    email: 'carlos.pereira@example.com',
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+```json
+{
+  "nome": "Maria Souza",
+  "cpf": "98765432109",
+  "cel": "(11) 91234-5678",
+  "email": "maria.souza@example.com",
+  "empresa": "Empresa Visitante",
+  "idDep": 1
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
   "mensagem": "Usuário criado com sucesso",
   "data": {
-    "id": 3,
-    "nome": "Carlos Pereira",
-    "cpf": "11122233344",
-    "celular": "(11) 99999-8888",
-    "email": "carlos.pereira@example.com",
-    "dataDeCriacao": "2026-04-29T10:10:00.000Z"
+    "id": 2,
+    "nome": "Maria Souza",
+    "cpf": "98765432109",
+    "celular": "(11) 91234-5678",
+    "email": "maria.souza@example.com",
+    "idDep": 1
   }
 }
 ```
@@ -420,74 +295,46 @@ fetch('http://localhost:3000/user/', {
 ---
 
 ### 👔 Funcionários (`/func`)
-*Gerencia o vínculo profissional, cargo e departamento.*
 
-| Método | Rota        | Descrição                                            |
-| ------ | ----------- | ---------------------------------------------------- |
-| GET    | `/func/`    | Listar todos os funcionários                         |
-| GET    | `/func/:id` | Buscar funcionário por ID                            |
-| POST   | `/func/`    | Criar registro de funcionário para usuário existente |
-| PUT    | `/func/:id` | Atualizar dados profissionais                        |
-| DELETE | `/func/:id` | Remover registro de funcionário                      |
+Gerencia registros funcionais vinculados a usuários. O tipo do funcionário pode ser `func`, `port`, `sup`, `ger` ou `adm`.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/func/` | Sim | Listar funcionários |
+| GET | `/func/:id` | Sim | Buscar funcionário por ID |
+| GET | `/func/name/:nome` | Sim | Buscar funcionário por nome |
+| GET | `/func/cpf/:cpf` | Sim | Buscar funcionário por CPF |
+| POST | `/func/` | Sim | Criar funcionário |
+| PUT | `/func/:id` | Sim | Atualizar funcionário |
+| DELETE | `/func/:id` | Sim | Remover funcionário |
 
 #### 📌 POST `/func/` - Criar registro de funcionário
 
-**Descrição:** Vincula um usuário existente a um registro de funcionário, definindo seu departamento, tipo e senha.
-
 **Requisição:**
-- **URL:** `http://localhost:3000/func/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "idUsuario": 3, // ID de um usuário existente (ex: Carlos Pereira)
-    "idDepartamento": 2, // ID de um departamento existente
-    "tipo": "port",      // Tipo de funcionário (func, port, sup, ger, adm)
-    "dataDeNascimento": "1985-05-15",
-    "senha": "senha_porteiro_456"
-  }
-  ```
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/func/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    idUsuario: 3,
-    idDepartamento: 2,
-    tipo: 'port',
-    dataDeNascimento: '1985-05-15',
-    senha: 'senha_porteiro_456',
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+```json
+{
+  "idUsuario": 1,
+  "idSetor": 2,
+  "tipo": "func",
+  "dataDeNascimento": "1990-01-01",
+  "imagem": null,
+  "senha": "senha_segura_123"
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
   "mensagem": "Funcionario criado com sucesso",
   "data": {
-    "id": 2,
-    "idUsuario": 3,
-    "idDepartamento": 2,
-    "tipo": "port",
-    "dataDeNascimento": "1985-05-15T00:00:00.000Z",
-    "imagem": null,
-    "senhaHash": "$2a$10$...
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 2,
+    "tipo": "func",
+    "dataDeNascimento": "1990-01-01"
   }
 }
 ```
@@ -496,172 +343,101 @@ fetch('http://localhost:3000/func/', {
 
 ### 🏢 Departamentos (`/dep`)
 
-| Método | Rota       | Descrição                            |
-| ------ | ---------- | ------------------------------------ |
-| GET    | `/dep/`    | Listar todos os departamentos        |
-| POST   | `/dep/`    | Criar novo departamento              |
-| PUT    | `/dep/:id` | Atualizar departamento (nome/gestor) |
-| DELETE | `/dep/:id` | Remover departamento                 |
+Gerencia departamentos da organização. No modelo atual, departamentos podem agrupar setores, usuários e dispositivos.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/dep/` | Sim | Listar departamentos |
+| GET | `/dep/:id` | Sim | Buscar departamento por ID |
+| POST | `/dep/` | Sim | Criar departamento |
+| PUT | `/dep/:id` | Sim | Atualizar departamento |
+| DELETE | `/dep/:id` | Sim | Remover departamento |
 
 #### 📌 POST `/dep/` - Criar novo departamento
 
-**Descrição:** Adiciona um novo departamento à estrutura da empresa.
-
 **Requisição:**
-- **URL:** `http://localhost:3000/dep/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "nome": "Portaria",
-    "idGestor": 2 // Opcional: ID de um funcionário que será o gestor
-  }
-  ```
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/dep/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    nome: 'Portaria',
-    idGestor: 2, // ID do funcionário Carlos Pereira
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
-
-**Resposta Esperada (200 OK):**
 ```json
 {
-  "sucesso": true,
-  "mensagem": "Criado o departamento Portaria com sucesso!"
+  "nome": "Tecnologia",
+  "idGestor": 1
 }
 ```
 
-**Resposta de Erro (400 Bad Request - Exemplo):**
+**Resposta Esperada (200 OK):**
+
 ```json
 {
-  "sucesso": false,
-  "mensagem": "Departamento já existe"
+  "sucesso": true,
+  "mensagem": "Criado o departamento Tecnologia com sucesso!"
 }
 ```
 
 ---
 
 ### 💳 Crachás (`/cracha`)
-*Representa o objeto físico do crachá.*
 
-| Método | Rota                     | Descrição                                                   |
-| ------ | ------------------------ | ----------------------------------------------------------- |
-| GET    | `/cracha/`               | Listar todos os crachás                                     |
-| POST   | `/cracha/`               | Gerar novo crachá (status padrão: disponível)               |
-| GET    | `/cracha/status/:status` | Filtrar por status (`d`=disponível, `p`=perdido, `e`=emUso) |
+Gerencia o ciclo de vida dos crachás. Ao criar um novo crachá, o status inicial é definido como `disponivel`.
 
-#### 📌 POST `/cracha/` - Gerar novo crachá
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| POST | `/cracha/` | Sim | Criar crachá com status disponível |
+| GET | `/cracha/` | Sim | Listar crachás |
+| GET | `/cracha/status/:status` | Sim | Filtrar crachás por status |
+| GET | `/cracha/:id` | Sim | Buscar crachá por ID |
+| PUT | `/cracha/:id` | Sim | Atualizar status do crachá |
+| DELETE | `/cracha/:id` | Sim | Remover crachá |
 
-**Descrição:** Cria um novo registro de crachá com status `disponivel`.
+#### 📌 GET `/cracha/status/:status` - Buscar por status
 
-**Requisição:**
-- **URL:** `http://localhost:3000/cracha/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:** (Não é necessário corpo para esta requisição)
+O parâmetro `status` aceita o valor completo ou os atalhos usados no controller.
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
+| Parâmetro | Status interpretado |
+| --- | --- |
+| `d` | `disponivel` |
+| `p` | `perdido` |
+| `e` | `emUso` |
+| `disponivel` | `disponivel` |
+| `perdido` | `perdido` |
+| `emUso` | `emUso` |
 
-fetch('http://localhost:3000/cracha/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
+#### 📌 PUT `/cracha/:id` - Atualizar status
 
-**Resposta Esperada (201 Created):**
 ```json
 {
-  "sucesso": true,
-  "message": "Crachá criado com sucesso"
+  "status": "emUso"
 }
 ```
 
 ---
 
 ### 🏷️ Tags RFID (`/tags`)
-*Vincula um código de tag física a um usuário e um crachá.*
 
-| Método | Rota        | Descrição                          |
-| ------ | ----------- | ---------------------------------- |
-| POST   | `/tags/`    | Vincular nova tag a usuário/crachá |
-| GET    | `/tags/:id` | Consultar detalhes de uma tag      |
+Gerencia tags RFID vinculadas a usuários. As tags são usadas durante a validação de acesso nos dispositivos.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/tags/` | Sim | Listar tags |
+| GET | `/tags/:id` | Sim | Buscar tag por ID |
+| POST | `/tags/` | Sim | Criar tag |
+| PUT | `/tags/:id` | Sim | Atualizar tag |
+| DELETE | `/tags/:id` | Sim | Remover tag |
 
 #### 📌 POST `/tags/` - Vincular nova tag
 
-**Descrição:** Associa um código de tag RFID a um usuário e um crachá existente, podendo ser temporária e com validade.
-
 **Requisição:**
-- **URL:** `http://localhost:3000/tags/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "idUsuario": 1, // ID do usuário (ex: João Silva)
-    "idCracha": 1,  // ID do crachá (recém-criado)
-    "codigoTag": "TAG123456",
-    "temporario": false,
-    "validade": null // Opcional: "YYYY-MM-DDTHH:MM:SSZ" para tags temporárias
-  }
-  ```
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/tags/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    idUsuario: 1,
-    idCracha: 1,
-    codigoTag: 'TAG123456',
-    temporario: false,
-    validade: null,
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+```json
+{
+  "idUsuario": 1,
+  "codigoTag": "RFID-ABC-123",
+  "temporario": false,
+  "validade": null
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
@@ -669,11 +445,9 @@ fetch('http://localhost:3000/tags/', {
   "data": {
     "id": 1,
     "idUsuario": 1,
-    "idCracha": 1,
-    "codigoTag": "TAG123456",
+    "codigoTag": "RFID-ABC-123",
     "temporario": false,
-    "validade": null,
-    "dataDeCriacao": "2026-04-29T10:20:00.000Z"
+    "validade": null
   }
 }
 ```
@@ -681,64 +455,77 @@ fetch('http://localhost:3000/tags/', {
 ---
 
 ### 📥 Requisições de Acesso (`/requisicao`)
-*Fluxo de solicitações de permissão para entrar em departamentos.*
 
-| Método | Rota                  | Descrição                                        |
-| ------ | --------------------- | ------------------------------------------------ |
-| POST   | `/requisicao/`        | Criar nova solicitação de acesso                 |
-| PUT    | `/requisicao/:id`     | Atualizar status (aprovado/recusado)             |
-| GET    | `/requisicao/dep/:id` | Listar requisições de um departamento específico |
+Gerencia solicitações de acesso interno de usuários a setores. O status da requisição utiliza o enum `pendente`, `aprovado` ou `recusado`.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/requisicao/` | Sim | Listar requisições de acesso |
+| GET | `/requisicao/:id` | Sim | Buscar requisição por ID |
+| GET | `/requisicao/func/:id` | Sim | Buscar requisições por usuário/funcionário |
+| GET | `/requisicao/setor/:id` | Sim | Buscar requisições por setor |
+| POST | `/requisicao/` | Sim | Criar requisição de acesso |
+| PUT | `/requisicao/:id` | Sim | Atualizar status da requisição |
+| DELETE | `/requisicao/:id` | Sim | Remover requisição |
 
 #### 📌 POST `/requisicao/` - Criar nova solicitação de acesso
 
-**Descrição:** Um usuário solicita acesso a um determinado departamento.
+```json
+{
+  "idUsuario": 1,
+  "idSetor": 2
+}
+```
 
-**Requisição:**
-- **URL:** `http://localhost:3000/requisicao/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "idUsuario": 1, // ID do usuário solicitante
-    "idDepartamento": 2 // ID do departamento desejado
-  }
-  ```
+#### 📌 PUT `/requisicao/:id` - Atualizar status
 
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
+```json
+{
+  "status": "aprovado"
+}
+```
 
-fetch('http://localhost:3000/requisicao/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    idUsuario: 1,
-    idDepartamento: 2,
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+---
+
+### 🧾 Requisições de Visitante (`/requisicao-visitante`)
+
+Gerencia solicitações de visita externa. Diferentemente da requisição interna, esta rota permite registrar motivo, validade, descrição e empresa de origem do visitante.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/requisicao-visitante/` | Sim | Listar requisições de visitantes |
+| GET | `/requisicao-visitante/:id` | Sim | Buscar requisição de visitante por ID |
+| POST | `/requisicao-visitante/` | Sim | Criar requisição de visitante |
+| PUT | `/requisicao-visitante/:id` | Sim | Atualizar requisição de visitante |
+| DELETE | `/requisicao-visitante/:id` | Sim | Remover requisição de visitante |
+
+#### 📌 POST `/requisicao-visitante/` - Criar requisição de visitante
+
+```json
+{
+  "idUsuario": 3,
+  "idSetor": 2,
+  "motivo": "Reunião com equipe comercial",
+  "validade": "2026-05-20T18:00:00.000Z",
+  "descricao": "Visitante autorizado para reunião agendada",
+  "empresa": "Empresa Parceira"
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
-  "mensagem": "Requisição de acesso criada com sucesso",
+  "mensagem": "Requisição de visitante criada com sucesso",
   "data": {
     "id": 1,
-    "idUsuario": 1,
-    "idDepartamento": 2,
+    "idUsuario": 3,
+    "idSetor": 2,
     "status": "pendente",
-    "dataDaRequisicao": "2026-04-29T10:25:00.000Z"
+    "motivo": "Reunião com equipe comercial",
+    "validade": "2026-05-20T18:00:00.000Z",
+    "empresa": "Empresa Parceira"
   }
 }
 ```
@@ -746,230 +533,71 @@ fetch('http://localhost:3000/requisicao/', {
 ---
 
 ### 🚪 Dispositivos (`/dispositivos`)
-*Gerencia os leitores físicos instalados nos departamentos.*
 
-| Método | Rota                        | Descrição                                                                  |
-| ------ | --------------------------- | -------------------------------------------------------------------------- |
-| GET    | `/dispositivos/`            | Listar dispositivos cadastrados                                            |
-| GET    | `/dispositivos/:id/:cracha` | **Validação de Acesso:** Verifica se o crachá tem permissão no dispositivo |
-| POST   | `/dispositivos/`            | Criar novo dispositivo                                                     |
+Gerencia dispositivos físicos usados para validação de acesso e inclui endpoint público para validação de crachá/tag.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/dispositivos/` | Sim | Listar dispositivos |
+| GET | `/dispositivos/:id` | Sim | Buscar dispositivo por ID |
+| POST | `/dispositivos/` | Sim | Criar dispositivo |
+| GET | `/dispositivos/:id/:cracha` | Não | Validar crachá/tag em um dispositivo |
+| PUT | `/dispositivos/:id` | Sim | Atualizar dispositivo |
+| DELETE | `/dispositivos/:id` | Sim | Remover dispositivo |
 
 #### 📌 POST `/dispositivos/` - Criar novo dispositivo
 
-**Descrição:** Cadastra um novo dispositivo leitor de crachás em um departamento.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/dispositivos/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "idDepartamento": 2, // ID do departamento onde o dispositivo será instalado
-    "local": "Entrada Principal"
-  }
-  ```
-
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/dispositivos/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    idDepartamento: 2,
-    local: 'Entrada Principal',
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
-
-**Resposta Esperada (201 Created):**
 ```json
 {
-  "sucesso": true,
-  "mensagem": "Dispositivo criado com sucesso",
-  "data": {
-    "id": 1,
-    "idDepartamento": 2,
-    "local": "Entrada Principal",
-    "dataManutencao": null,
-    "dataDeCriacao": "2026-04-29T10:30:00.000Z"
-  }
+  "idSetor": 2,
+  "idDep": 1,
+  "local": "Entrada Principal",
+  "dataManutencao": "2026-06-01T10:00:00.000Z"
 }
 ```
 
----
+#### 📌 GET `/dispositivos/:id/:cracha` - Validação de acesso
 
-#### 📌 GET `/dispositivos/:id/:cracha` - Validação de Acesso
+**Descrição:** valida se a tag/crachá possui autorização para o setor associado ao dispositivo. O fluxo consulta a tag pelo `codigoTag`, verifica o vínculo do usuário, compara permissões e publica o resultado no tópico MQTT `dispositivos/:id`.
 
-**Descrição:** Verifica se um crachá específico (`:cracha`) tem permissão para acessar o dispositivo (`:id`) em seu departamento.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/dispositivos/1/TAG123456` (Exemplo: Dispositivo ID 1, Crachá TAG123456)
-- **Headers:** (Não requer autenticação JWT, pois é para uso por hardware)
-
-**Exemplo `fetch`:**
-```javascript
-fetch('http://localhost:3000/dispositivos/1/TAG123456', {
-  method: 'GET',
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
-
-**Resposta Esperada (200 OK - Acesso Permitido):**
-```json
-{
-  "sucesso": true
-}
-```
-
-**Resposta de Erro (403 Forbidden - Acesso Negado):**
-```json
-{
-  "sucesso": false,
-  "mensagem": "Acesso negado: usuário não tem permissão para acessar este dispositivo"
-}
-```
-
-**Resposta de Erro (404 Not Found - Crachá/Dispositivo não cadastrado):**
-```json
-{
-  "sucesso": false,
-  "mensagem": "Cracha não cadastrado"
-}
-```
+| Situação | Resposta esperada |
+| --- | --- |
+| Dispositivo não encontrado | `404` com mensagem `ERRO, DISPOSITIVO NÃO VINCULADO` |
+| Tag não cadastrada | `404` com mensagem `CRACHA NAO CADASTRADO NO SISTEMA` |
+| Requisição aprovada | `200` com mensagem `ACESSO PERMITIDO` |
+| Requisição recusada | `200` com mensagem de acesso recusado pelo supervisor |
+| Requisição pendente | `200` com mensagem de aguardando verificação |
+| Sem permissão | `403` com mensagem de acesso negado ou solicitação ao supervisor |
 
 ---
 
 ### 📜 Logs de Acesso (`/logs`)
 
-| Método | Rota               | Descrição                         |
-| ------ | ------------------ | --------------------------------- |
-| GET    | `/logs/`           | Listar todos os logs de acesso    |
-| GET    | `/logs/user/:id`   | Buscar logs por ID de usuário     |
-| GET    | `/logs/device/:id` | Buscar logs por ID de dispositivo |
+Gerencia registros de entrada e saída por usuário e dispositivo.
 
----
-
-### 🖼️ Avatares (`/avatar`)
-*Gerencia as imagens de perfil dos usuários.*
-
-| Método | Rota                  | Descrição                                  |
-| ------ | --------------------- | ------------------------------------------ |
-| GET    | `/avatar/:funcId` | Obter imagem de um funcionário específico  |
-| POST   | `/avatar/:funcId` | Fazer upload de imagem para um funcionário |
-| DELETE | `/avatar/:funcId` | Deletar imagem de um funcionário           |
-| GET    | `/avatar/`        | Listar todos os funcionários com imagens   |
-
-#### 📌 POST `/avatar/:funcId` - Upload de Imagem de Funcionário
-
-**Descrição:** Faz upload de uma imagem para um funcionário. A URL será salva no campo `imagem` da tabela `funcionarios`.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/avatar/1`
-- **Headers:**
-  ```
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body (form-data):**
-  - `avatar`: Arquivo de imagem (JPEG, PNG, GIF, WebP)
-
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-const formData = new FormData();
-formData.append('avatar', fileInput.files[0]);
-
-fetch('http://localhost:3000/avatar/1', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-  },
-  body: formData
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
-```
-
-**Resposta Esperada (200 OK):**
-```json
-{
-  "sucesso": true,
-  "mensagem": "Avatar enviado com sucesso",
-  "data": {
-    "id": 1,
-    "nome": "João Silva",
-    "avatar": "/uploads/avatar-1715000000000-123456789.jpg"
-  }
-}
-```
-
----
-
-| Método | Rota                          | Descrição                              |
-| ------ | ----------------------------- | -------------------------------------- |
-| GET    | `/logs/`                      | Listar histórico completo de acessos   |
-| GET    | `/logs/user/:idUsuario`       | Histórico de um usuário específico     |
-| GET    | `/logs/device/:idDispositivo` | Histórico de um dispositivo específico |
-| POST   | `/logs/`                      | Criar novo registro de log             |
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/logs/` | Sim | Listar logs |
+| GET | `/logs/:id` | Sim | Buscar log por ID |
+| GET | `/logs/user/:idUsuario` | Sim | Buscar logs por usuário |
+| GET | `/logs/device/:idDispositivo` | Sim | Buscar logs por dispositivo |
+| POST | `/logs/` | Sim | Criar log |
+| PUT | `/logs/:id` | Sim | Atualizar log |
+| DELETE | `/logs/:id` | Sim | Remover log |
 
 #### 📌 POST `/logs/` - Criar novo registro de log
 
-**Descrição:** Registra uma entrada ou saída de um usuário em um dispositivo.
-
-**Requisição:**
-- **URL:** `http://localhost:3000/logs/`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <SEU_TOKEN_JWT>
-  ```
-- **Body:**
-  ```json
-  {
-    "idDispositivo": 1, // ID do dispositivo
-    "idUsuario": 1,     // ID do usuário
-    "dataDeEntrada": "2026-04-29T10:35:00.000Z", // Opcional: Data e hora da entrada
-    "dataDeSaida": null // Opcional: Data e hora da saída (pode ser atualizado depois)
-  }
-  ```
-
-**Exemplo `fetch`:**
-```javascript
-const token = localStorage.getItem('jwtToken');
-
-fetch('http://localhost:3000/logs/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    idDispositivo: 1,
-    idUsuario: 1,
-    dataDeEntrada: new Date().toISOString(),
-    dataDeSaida: null,
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Erro:', error));
+```json
+{
+  "idDispositivo": 1,
+  "idUsuario": 1,
+  "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+  "dataDeSaida": null
+}
 ```
 
 **Resposta Esperada (201 Created):**
+
 ```json
 {
   "sucesso": true,
@@ -978,7 +606,7 @@ fetch('http://localhost:3000/logs/', {
     "id": 1,
     "idDispositivo": 1,
     "idUsuario": 1,
-    "dataDeEntrada": "2026-04-29T10:35:00.000Z",
+    "dataDeEntrada": "2026-05-13T08:00:00.000Z",
     "dataDeSaida": null
   }
 }
@@ -986,205 +614,176 @@ fetch('http://localhost:3000/logs/', {
 
 ---
 
-## Modelos de Dados (Prisma)
+### 🖼️ Avatares (`/avatar`)
 
-### Principais Entidades:
-- **Usuario:** Dados pessoais (nome, CPF, email).
-- **Funcionario:** Dados corporativos (cargo, senha, departamento).
-- **Departamento:** Setores da empresa com gestor responsável.
-- **Cracha & Tag:** Identificadores físicos para acesso.
-- **Log:** Registro temporal de entradas e saídas.
+Gerencia imagens de funcionários via upload em memória com Multer e armazenamento no Supabase Storage. São aceitos arquivos `JPEG`, `PNG`, `GIF` e `WebP`, com limite de **5 MB** por arquivo.
 
----
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/avatar/` | Não | Listar avatares cadastrados |
+| GET | `/avatar/:funcId` | Não | Obter avatar de um funcionário |
+| POST | `/avatar/:funcId` | Requer usuário no controller | Fazer upload de avatar |
+| DELETE | `/avatar/:funcId` | Requer usuário no controller | Remover avatar |
 
-## Códigos de Resposta
+#### 📌 POST `/avatar/:funcId` - Upload de imagem de funcionário
 
-| Código                 | Significado                                    |
-| ---------------------- | ---------------------------------------------- |
-| **200 OK**             | Requisição processada com sucesso.             |
-| **201 Created**        | Recurso criado com sucesso.                    |
-| **400 Bad Request**    | Dados enviados são inválidos.                  |
-| **401 Unauthorized**   | Token ausente ou inválido.                     |
-| **403 Forbidden**      | Sem permissão para o recurso ou acesso negado. |
-| **404 Not Found**      | Recurso não encontrado.                        |
-| **500 Internal Error** | Erro inesperado no servidor.                   |
+**Requisição:** use `multipart/form-data` com o campo `avatar`.
 
----
-
-# Documentação das Rotas de Imagem de Funcionários
-
-## Visão Geral
-
-As rotas de imagem permitem gerenciar as fotos de perfil dos **funcionários**. O sistema utiliza o **Supabase Storage** para armazenamento e salva a URL no campo `imagem` da tabela `funcionarios`.
-
----
-
-## Endpoints
-
-### Rota de Avatar (`/avatar`)
-
-#### **Métodos Disponíveis:**
-
-##### **1. GET `/avatar/:funcId` - Obter Avatar**
-- **Descrição:** Recupera a imagem de perfil de um funcionário específico.
-- **Parâmetros:** 
-  - `funcId` (URL param): ID do funcionário.
-- **Resposta (200 OK):**
-  ```json
-  {
-    "sucesso": true,
-    "mensagem": "Imagem obtida com sucesso",
-    "data": {
-      "funcId": 1,
-      "nome": "João Silva",
-      "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
-    }
-  }
-  ```
-- **Erros:**
-  - `404`: Funcionário não encontrado ou sem imagem.
-  - `500`: Erro ao processar requisição.
-
-##### **2. POST `/avatar/:funcId` - Upload de Avatar**
-- **Descrição:** Faz upload de uma nova imagem de perfil para um funcionário. Requer autenticação JWT.
-- **Autenticação:** Sim (middleware JWT verificado em `req.user.id`).
-- **Validações:**
-  - **Segurança:** Apenas o dono da conta (validação de `usuarioId`) pode fazer upload para seu próprio perfil.
-  - **Tipo de arquivo:** JPEG, PNG, GIF, WebP.
-  - **Tamanho máximo:** 5MB.
-- **Comportamento:**
-  1. Valida se o arquivo foi enviado.
-  2. Verifica permissão do usuário (segurança).
-  3. Remove imagem anterior (se existir).
-  4. Faz upload para Supabase Storage com path `{userId}/avatar.{extensão}`.
-  5. Gera URL pública.
-  6. Atualiza registro no banco de dados.
-  
-**Parâmetros:**
-- `funcId` (path, obrigatório): ID do funcionário
-- `avatar` (form-data, obrigatório): Arquivo de imagem
-
-**Exemplo `fetch`:**
 ```javascript
 const formData = new FormData();
 formData.append('avatar', fileInput.files[0]);
 
 fetch('http://localhost:3000/avatar/1', {
   method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`
+  },
   body: formData
 })
-.then(response => response.json())
-.then(data => console.log(data));
+  .then(response => response.json())
+  .then(data => console.log(data));
 ```
-- **Resposta (200 OK):**
-  ```json
-  {
-    "sucesso": true,
-    "mensagem": "Imagem enviada com sucesso",
-    "data": {
-      "id": 1,
-      "nome": "João Silva",
-      "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
-    }
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Imagem enviada com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "João Silva",
+    "imagem": "https://seu-projeto.supabase.co/storage/v1/object/public/usuarios/1/avatar.png"
   }
-  ```
-- **Erros:**
-  - `400`: Nenhum arquivo enviado.
-  - `403`: Usuário sem permissão para alterar a imagem.
-  - `404`: Funcionário não encontrado.
-  - `500`: Erro no upload ou banco de dados.
+}
+```
 
-##### **3. DELETE `/avatar/:funcId` - Deletar Avatar**
-- **Descrição:** Remove a imagem de perfil de um funcionário. Requer autenticação JWT.
-- **Autenticação:** Sim (middleware JWT verificado em `req.user.id`).
-- **Parâmetros:**
-  - `funcId` (URL param): ID do funcionário.
-- **Comportamento:**
-  1. Valida propriedade do recurso.
-  2. Remove arquivo do Supabase Storage.
-  3. Define campo `imagem` como `null` no banco de dados.
-- **Resposta (200 OK):**
-  ```json
-  {
-    "sucesso": true,
-    "mensagem": "Imagem deletada com sucesso",
-    "data": {
-      "id": 1,
-      "nome": "João Silva",
-      "imagem": null
-    }
-  }
-  ```
-- **Erros:**
-  - `403`: Sem permissão para deletar.
-  - `404`: Funcionário não encontrado ou sem imagem.
-  - `500`: Erro ao processar.
-
-##### **4. GET `/avatar` - Obter Todos os Avatares**
-- **Descrição:** Retorna lista de todos os funcionários que possuem imagem de perfil.
-- **Parâmetros:** Nenhum.
-- **Resposta (200 OK):**
-  ```json
-  {
-    "sucesso": true,
-    "mensagem": "Imagens obtidas com sucesso",
-    "data": [
-      {
-        "id": 1,
-        "nome": "João Silva",
-        "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
-      },
-      {
-        "id": 2,
-        "nome": "Maria Santos",
-        "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/2/avatar.png"
-      }
-    ]
-  }
-  ```
-- **Erros:**
-  - `404`: Nenhuma imagem encontrada.
-  - `500`: Erro ao processar.
-
-#### **Configuração de Upload (Multer):**
-- **Storage:** Memória (não persiste em disco local).
-- **File Filter:** Valida tipo de arquivo.
-- **Limite:** 5MB por arquivo.
-- **Campo esperado:** `avatar` (multipart form-data).
-
-#### **Integração com Supabase:**
-- **Bucket:** `avatares` (definido em `BUCKET_NAME`).
-- **Path Storage:** `{userId}/avatar.{extensão}`.
-- **Política:** Substitui arquivo anterior automaticamente (upsert: true).
-- **URL Pública:** Gerada automaticamente após upload.
-
-#### **Segurança:**
-- ✅ Autenticação JWT obrigatória para POST e DELETE.
-- ✅ Validação de propriedade: usuário só pode gerenciar seu próprio avatar.
-- ✅ Validação de tipo e tamanho de arquivo.
-- ✅ Limpeza automática de arquivos antigos.
+> **Nota técnica:** o controller de upload e exclusão utiliza `req.user.id` para validar o dono da imagem. Caso essas rotas sejam mantidas sem middleware no router, será necessário adicionar autenticação no router ou ajustar o controller para evitar falhas por `req.user` indefinido.
 
 ---
 
-## Configuração do Banco de Dados
+### 📊 Views Consolidadas (`/views`)
 
-O sistema utiliza a tabela `funcionarios` e o campo `imagem`:
+Fornece endpoints de leitura para consultas consolidadas usadas em dashboards, relatórios e telas administrativas. Todas as rotas exigem autenticação.
 
-```prisma
-model Funcionario {
-  id        Int     @id @default(autoincrement())
-  idUsuario Int
-  imagem    String? @db.VarChar(255) // Campo utilizado para a URL do Supabase
-  // ...
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/views/requisicoes` | Sim | Listar requisições internas e externas em formato consolidado |
+| GET | `/views/logs` | Sim | Listar logs com dados de usuário, dispositivo e departamento |
+| GET | `/views/usuarios` | Sim | Listar perfis completos de usuários |
+| GET | `/views/tags` | Sim | Listar tags com usuário, crachá e departamento vinculado |
+
+#### 📌 GET `/views/requisicoes` - Requisições consolidadas
+
+**Campos retornados:**
+
+| Campo | Descrição |
+| --- | --- |
+| `id` | Identificador da requisição |
+| `idUsuario` | Usuário relacionado |
+| `idDepartamento` | Departamento ou setor relacionado conforme consulta consolidada |
+| `status` | `pendente`, `aprovado` ou `recusado` |
+| `dataDaRequisicao` | Data de criação da solicitação |
+| `tipo_requisicao` | `Acesso Interno` ou `Visita Externa` |
+| `empresa_visitante` | Campo consolidado para dados do visitante |
+| `validade_visita` | Data de validade da visita externa |
+
+#### 📌 GET `/views/logs` - Logs detalhados
+
+Retorna `log_id`, `usuario_nome`, `usuario_cpf`, `local_dispositivo`, `dataDeEntrada`, `dataDeSaida` e `departamento_usuario`.
+
+#### 📌 GET `/views/usuarios` - Usuários detalhados
+
+Retorna perfil consolidado com dados do usuário, cargo, nascimento, foto de perfil, departamento e data de criação.
+
+#### 📌 GET `/views/tags` - Tags detalhadas
+
+Retorna `codigoTag`, dados do usuário, status do crachá, temporariedade, validade e departamento vinculado.
+
+---
+
+### 🛂 Portaria (`/portaria`)
+
+Fornece consulta voltada para acompanhamento de visitantes na portaria.
+
+| Método | Rota | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| GET | `/portaria/vlocal` | Não | Listar visitantes com informações de entrada, saída e status |
+
+#### 📌 GET `/portaria/vlocal` - Visitantes no local
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "dados": [
+    {
+      "id": 3,
+      "nome": "Maria Souza",
+      "empresa": "Empresa Parceira",
+      "setor": "Recepção",
+      "entrada": "2026-05-13T08:00:00.000Z",
+      "saida": null,
+      "status": "Dentro"
+    }
+  ]
 }
 ```
 
 ---
 
+## Modelos de Dados (Prisma)
+
+O schema atual utiliza PostgreSQL e define modelos para usuários, departamentos, funcionários, tags, requisições, dispositivos, logs, setores e empresas, além de views para consultas consolidadas.
+
+### Principais Entidades:
+
+| Entidade | Tabela/View | Descrição |
+| --- | --- | --- |
+| `Usuario` | `usuarios` | Dados básicos de identificação e contato |
+| `Departamento` | `departamentos` | Estrutura organizacional principal |
+| `Funcionario` | `funcionarios` | Dados funcionais, cargo, setor e senha hash |
+| `Tag` | `tags` | Tags RFID vinculadas a usuários |
+| `RequisicaoDeAcesso` | `requisicoes_de_acessos` | Solicitações internas de acesso a setores |
+| `RequisicaoDeVisita` | `requisicoes_de_visitas` | Solicitações de visitas externas |
+| `Dispositivo` | `dispositivos` | Dispositivos físicos de controle de acesso |
+| `Log` | `logs` | Registros de entrada e saída |
+| `setores` | `setores` | Setores associados a departamentos |
+| `empresas` | `empresas` | Empresas vinculadas a usuários visitantes |
+| `view_central_requisicoes` | view | Consolidação de requisições internas e externas |
+| `view_logs_detalhados` | view | Logs enriquecidos para consulta |
+| `view_perfil_completo_usuario` | view | Perfil consolidado de usuários |
+| `view_portaria_visitantes` | view | Consulta de visitantes para portaria |
+
+### Enums:
+
+| Enum | Valores |
+| --- | --- |
+| `TipoFuncionario` | `func`, `port`, `sup`, `ger`, `adm` |
+| `StatusCracha` | `perdido`, `emUso`, `disponivel` |
+| `StatusRequisicao` | `pendente`, `aprovado`, `recusado` |
+
+---
+
+## Códigos de Resposta
+
+| Código | Significado | Uso comum na API |
+| --- | --- | --- |
+| `200 OK` | Operação concluída com sucesso | Consultas, atualizações e exclusões |
+| `201 Created` | Recurso criado com sucesso | Cadastros de usuários, funcionários, tags, logs e requisições |
+| `400 Bad Request` | Dados inválidos ou regra de negócio violada | Campos obrigatórios ausentes ou registro já existente |
+| `401 Unauthorized` | Token ausente, inválido ou expirado | Rotas protegidas sem autenticação válida |
+| `403 Forbidden` | Acesso negado | Usuário sem permissão para recurso ou departamento |
+| `404 Not Found` | Recurso não encontrado | Entidades inexistentes ou listas vazias tratadas como erro |
+| `500 Internal Server Error` | Erro interno da aplicação | Falhas de banco, storage, MQTT ou exceções inesperadas |
+
+---
+
 ## Notas Técnicas
 
-1. **Storage**: Supabase Storage (Bucket: `usuarios`).
-2. **Substituição**: Ao enviar uma nova imagem, a antiga é automaticamente removida do Supabase.
-3. **URL Pública**: O campo `imagem` armazena a URL pública completa para acesso direto.
-
-*Documentação atualizada em 12 de Maio de 2026.*
+- O projeto utiliza `type: "module"`, portanto os arquivos usam sintaxe `import/export`.
+- A conexão Prisma ativa depende de `DATABASE_URL` e do adapter PostgreSQL configurado em `backend/config/prisma.js`.
+- O bucket usado pelo módulo Supabase é `usuarios`.
+- A validação de crachá em `/dispositivos/:id/:cracha` publica mensagens no broker MQTT configurado no código.
+- Algumas partes do código ainda carregam nomes legados de campos ou modelos, como `idDepartamento` e `logDeAcesso`. Ao evoluir a API, recomenda-se alinhar controllers, schema Prisma, migrations e documentação para evitar divergências entre contrato HTTP e modelo persistido.
