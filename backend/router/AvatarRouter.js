@@ -25,25 +25,25 @@ const upload = multer({
 });
 
 /**
- * GET /api/avatar/:funcId
+ * GET /avatar/:funcId
  * Obter imagem de um funcionário específico
  */
 router.get("/:funcId", AvatarController.getAvatar);
 
 /**
- * POST /api/avatar/:funcId
+ * POST /avatar/:funcId
  * Fazer upload de imagem para um funcionário
  */
 router.post("/:funcId", upload.single("avatar"), AvatarController.uploadAvatar);
 
 /**
- * DELETE /api/avatar/:funcId
+ * DELETE /avatar/:funcId
  * Deletar imagem de um funcionário
  */
 router.delete("/:funcId", AvatarController.deleteAvatar);
 
 /**
- * GET /api/avatar
+ * GET /avatar
  * Obter todas as imagens de funcionários
  */
 router.get("/", AvatarController.getAllAvatars);

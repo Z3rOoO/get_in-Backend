@@ -22,7 +22,7 @@ Documentação completa da API Backend do sistema **GET IN**, uma solução robu
   - [📥 Requisições de Acesso (`/requisicao`)](#-requisições-de-acesso-requisicao)
   - [🚪 Dispositivos (`/dispositivos`)](#-dispositivos-dispositivos)
   - [📜 Logs de Acesso (`/logs`)](#-logs-de-acesso-logs)
-- [🖼️ Avatares (`/api/avatar`)](#️-avatares-apiavatar)
+- [🖼️ Avatares (`/avatar`)](#️-avatares-apiavatar)
 - [Modelos de Dados (Prisma)](#modelos-de-dados-prisma)
 - [Códigos de Resposta](#códigos-de-resposta)
 
@@ -42,15 +42,15 @@ O **GET IN** é um sistema de backend desenvolvido para gerenciar o fluxo de pes
 
 ## Stack Tecnológica
 
-| Componente | Tecnologia |
-|-----------|-----------|
-| **Ambiente de Execução** | Node.js |
-| **Framework Web** | Express.js |
-| **Linguagem** | JavaScript (ES Modules) |
-| **ORM** | Prisma |
-| **Banco de Dados** | PostgreSQL |
-| **Autenticação** | JWT (JSON Web Tokens) |
-| **Criptografia** | bcryptjs |
+| Componente               | Tecnologia              |
+| ------------------------ | ----------------------- |
+| **Ambiente de Execução** | Node.js                 |
+| **Framework Web**        | Express.js              |
+| **Linguagem**            | JavaScript (ES Modules) |
+| **ORM**                  | Prisma                  |
+| **Banco de Dados**       | PostgreSQL              |
+| **Autenticação**         | JWT (JSON Web Tokens)   |
+| **Criptografia**         | bcryptjs                |
 
 ---
 
@@ -132,10 +132,10 @@ A maioria das rotas exige autenticação via **JWT**.
 
 ### 🔐 Autenticação (`/auth`)
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/auth/` | Registrar um novo funcionário (Cria Usuário + Funcionário) |
-| POST | `/auth/login` | Autenticar e receber token JWT |
+| Método | Rota          | Descrição                                                  |
+| ------ | ------------- | ---------------------------------------------------------- |
+| POST   | `/auth/`      | Registrar um novo funcionário (Cria Usuário + Funcionário) |
+| POST   | `/auth/login` | Autenticar e receber token JWT                             |
 
 #### 📌 POST `/auth/` - Registrar novo funcionário
 
@@ -290,15 +290,15 @@ fetch('http://localhost:3000/auth/login', {
 ### 👥 Usuários (`/user`)
 *Gerencia os dados básicos de identificação das pessoas.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/user/` | Listar todos os usuários |
-| GET | `/user/:id` | Buscar usuário por ID |
-| GET | `/user/name/:nome` | Buscar usuários por nome (filtro parcial) |
-| GET | `/user/cpf/:cpf` | Buscar usuário por CPF |
-| POST | `/user/` | Criar um usuário simples |
-| PUT | `/user/:id` | Atualizar dados do usuário |
-| DELETE | `/user/:id` | Remover usuário |
+| Método | Rota               | Descrição                                 |
+| ------ | ------------------ | ----------------------------------------- |
+| GET    | `/user/`           | Listar todos os usuários                  |
+| GET    | `/user/:id`        | Buscar usuário por ID                     |
+| GET    | `/user/name/:nome` | Buscar usuários por nome (filtro parcial) |
+| GET    | `/user/cpf/:cpf`   | Buscar usuário por CPF                    |
+| POST   | `/user/`           | Criar um usuário simples                  |
+| PUT    | `/user/:id`        | Atualizar dados do usuário                |
+| DELETE | `/user/:id`        | Remover usuário                           |
 
 #### 📌 GET `/user/` - Listar todos os usuários
 
@@ -422,13 +422,13 @@ fetch('http://localhost:3000/user/', {
 ### 👔 Funcionários (`/func`)
 *Gerencia o vínculo profissional, cargo e departamento.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/func/` | Listar todos os funcionários |
-| GET | `/func/:id` | Buscar funcionário por ID |
-| POST | `/func/` | Criar registro de funcionário para usuário existente |
-| PUT | `/func/:id` | Atualizar dados profissionais |
-| DELETE | `/func/:id` | Remover registro de funcionário |
+| Método | Rota        | Descrição                                            |
+| ------ | ----------- | ---------------------------------------------------- |
+| GET    | `/func/`    | Listar todos os funcionários                         |
+| GET    | `/func/:id` | Buscar funcionário por ID                            |
+| POST   | `/func/`    | Criar registro de funcionário para usuário existente |
+| PUT    | `/func/:id` | Atualizar dados profissionais                        |
+| DELETE | `/func/:id` | Remover registro de funcionário                      |
 
 #### 📌 POST `/func/` - Criar registro de funcionário
 
@@ -496,12 +496,12 @@ fetch('http://localhost:3000/func/', {
 
 ### 🏢 Departamentos (`/dep`)
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/dep/` | Listar todos os departamentos |
-| POST | `/dep/` | Criar novo departamento |
-| PUT | `/dep/:id` | Atualizar departamento (nome/gestor) |
-| DELETE | `/dep/:id` | Remover departamento |
+| Método | Rota       | Descrição                            |
+| ------ | ---------- | ------------------------------------ |
+| GET    | `/dep/`    | Listar todos os departamentos        |
+| POST   | `/dep/`    | Criar novo departamento              |
+| PUT    | `/dep/:id` | Atualizar departamento (nome/gestor) |
+| DELETE | `/dep/:id` | Remover departamento                 |
 
 #### 📌 POST `/dep/` - Criar novo departamento
 
@@ -563,11 +563,11 @@ fetch('http://localhost:3000/dep/', {
 ### 💳 Crachás (`/cracha`)
 *Representa o objeto físico do crachá.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/cracha/` | Listar todos os crachás |
-| POST | `/cracha/` | Gerar novo crachá (status padrão: disponível) |
-| GET | `/cracha/status/:status` | Filtrar por status (`d`=disponível, `p`=perdido, `e`=emUso) |
+| Método | Rota                     | Descrição                                                   |
+| ------ | ------------------------ | ----------------------------------------------------------- |
+| GET    | `/cracha/`               | Listar todos os crachás                                     |
+| POST   | `/cracha/`               | Gerar novo crachá (status padrão: disponível)               |
+| GET    | `/cracha/status/:status` | Filtrar por status (`d`=disponível, `p`=perdido, `e`=emUso) |
 
 #### 📌 POST `/cracha/` - Gerar novo crachá
 
@@ -611,10 +611,10 @@ fetch('http://localhost:3000/cracha/', {
 ### 🏷️ Tags RFID (`/tags`)
 *Vincula um código de tag física a um usuário e um crachá.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/tags/` | Vincular nova tag a usuário/crachá |
-| GET | `/tags/:id` | Consultar detalhes de uma tag |
+| Método | Rota        | Descrição                          |
+| ------ | ----------- | ---------------------------------- |
+| POST   | `/tags/`    | Vincular nova tag a usuário/crachá |
+| GET    | `/tags/:id` | Consultar detalhes de uma tag      |
 
 #### 📌 POST `/tags/` - Vincular nova tag
 
@@ -683,11 +683,11 @@ fetch('http://localhost:3000/tags/', {
 ### 📥 Requisições de Acesso (`/requisicao`)
 *Fluxo de solicitações de permissão para entrar em departamentos.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/requisicao/` | Criar nova solicitação de acesso |
-| PUT | `/requisicao/:id` | Atualizar status (aprovado/recusado) |
-| GET | `/requisicao/dep/:id` | Listar requisições de um departamento específico |
+| Método | Rota                  | Descrição                                        |
+| ------ | --------------------- | ------------------------------------------------ |
+| POST   | `/requisicao/`        | Criar nova solicitação de acesso                 |
+| PUT    | `/requisicao/:id`     | Atualizar status (aprovado/recusado)             |
+| GET    | `/requisicao/dep/:id` | Listar requisições de um departamento específico |
 
 #### 📌 POST `/requisicao/` - Criar nova solicitação de acesso
 
@@ -748,11 +748,11 @@ fetch('http://localhost:3000/requisicao/', {
 ### 🚪 Dispositivos (`/dispositivos`)
 *Gerencia os leitores físicos instalados nos departamentos.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/dispositivos/` | Listar dispositivos cadastrados |
-| GET | `/dispositivos/:id/:cracha` | **Validação de Acesso:** Verifica se o crachá tem permissão no dispositivo |
-| POST | `/dispositivos/` | Criar novo dispositivo |
+| Método | Rota                        | Descrição                                                                  |
+| ------ | --------------------------- | -------------------------------------------------------------------------- |
+| GET    | `/dispositivos/`            | Listar dispositivos cadastrados                                            |
+| GET    | `/dispositivos/:id/:cracha` | **Validação de Acesso:** Verifica se o crachá tem permissão no dispositivo |
+| POST   | `/dispositivos/`            | Criar novo dispositivo                                                     |
 
 #### 📌 POST `/dispositivos/` - Criar novo dispositivo
 
@@ -855,30 +855,30 @@ fetch('http://localhost:3000/dispositivos/1/TAG123456', {
 
 ### 📜 Logs de Acesso (`/logs`)
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/logs/` | Listar todos os logs de acesso |
-| GET | `/logs/user/:id` | Buscar logs por ID de usuário |
-| GET | `/logs/device/:id` | Buscar logs por ID de dispositivo |
+| Método | Rota               | Descrição                         |
+| ------ | ------------------ | --------------------------------- |
+| GET    | `/logs/`           | Listar todos os logs de acesso    |
+| GET    | `/logs/user/:id`   | Buscar logs por ID de usuário     |
+| GET    | `/logs/device/:id` | Buscar logs por ID de dispositivo |
 
 ---
 
-### 🖼️ Avatares (`/api/avatar`)
+### 🖼️ Avatares (`/avatar`)
 *Gerencia as imagens de perfil dos usuários.*
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/avatar/:funcId` | Obter imagem de um funcionário específico |
-| POST | `/api/avatar/:funcId` | Fazer upload de imagem para um funcionário |
-| DELETE | `/api/avatar/:funcId` | Deletar imagem de um funcionário |
-| GET | `/api/avatar/` | Listar todos os funcionários com imagens |
+| Método | Rota                  | Descrição                                  |
+| ------ | --------------------- | ------------------------------------------ |
+| GET    | `/avatar/:funcId` | Obter imagem de um funcionário específico  |
+| POST   | `/avatar/:funcId` | Fazer upload de imagem para um funcionário |
+| DELETE | `/avatar/:funcId` | Deletar imagem de um funcionário           |
+| GET    | `/avatar/`        | Listar todos os funcionários com imagens   |
 
-#### 📌 POST `/api/avatar/:funcId` - Upload de Imagem de Funcionário
+#### 📌 POST `/avatar/:funcId` - Upload de Imagem de Funcionário
 
 **Descrição:** Faz upload de uma imagem para um funcionário. A URL será salva no campo `imagem` da tabela `funcionarios`.
 
 **Requisição:**
-- **URL:** `http://localhost:3000/api/avatar/1`
+- **URL:** `http://localhost:3000/avatar/1`
 - **Headers:**
   ```
   Authorization: Bearer <SEU_TOKEN_JWT>
@@ -892,7 +892,7 @@ const token = localStorage.getItem('jwtToken');
 const formData = new FormData();
 formData.append('avatar', fileInput.files[0]);
 
-fetch('http://localhost:3000/api/avatar/1', {
+fetch('http://localhost:3000/avatar/1', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${token}`,
@@ -919,12 +919,12 @@ fetch('http://localhost:3000/api/avatar/1', {
 
 ---
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/logs/` | Listar histórico completo de acessos |
-| GET | `/logs/user/:idUsuario` | Histórico de um usuário específico |
-| GET | `/logs/device/:idDispositivo` | Histórico de um dispositivo específico |
-| POST | `/logs/` | Criar novo registro de log |
+| Método | Rota                          | Descrição                              |
+| ------ | ----------------------------- | -------------------------------------- |
+| GET    | `/logs/`                      | Listar histórico completo de acessos   |
+| GET    | `/logs/user/:idUsuario`       | Histórico de um usuário específico     |
+| GET    | `/logs/device/:idDispositivo` | Histórico de um dispositivo específico |
+| POST   | `/logs/`                      | Criar novo registro de log             |
 
 #### 📌 POST `/logs/` - Criar novo registro de log
 
@@ -999,15 +999,15 @@ fetch('http://localhost:3000/logs/', {
 
 ## Códigos de Resposta
 
-| Código | Significado |
-|--------|-------------|
-| **200 OK** | Requisição processada com sucesso. |
-| **201 Created** | Recurso criado com sucesso. |
-| **400 Bad Request** | Dados enviados são inválidos. |
-| **401 Unauthorized** | Token ausente ou inválido. |
-| **403 Forbidden** | Sem permissão para o recurso ou acesso negado. |
-| **404 Not Found** | Recurso não encontrado. |
-| **500 Internal Error** | Erro inesperado no servidor. |
+| Código                 | Significado                                    |
+| ---------------------- | ---------------------------------------------- |
+| **200 OK**             | Requisição processada com sucesso.             |
+| **201 Created**        | Recurso criado com sucesso.                    |
+| **400 Bad Request**    | Dados enviados são inválidos.                  |
+| **401 Unauthorized**   | Token ausente ou inválido.                     |
+| **403 Forbidden**      | Sem permissão para o recurso ou acesso negado. |
+| **404 Not Found**      | Recurso não encontrado.                        |
+| **500 Internal Error** | Erro inesperado no servidor.                   |
 
 ---
 
@@ -1021,36 +1021,45 @@ As rotas de imagem permitem gerenciar as fotos de perfil dos **funcionários**. 
 
 ## Endpoints
 
-### 1. Obter Imagem de um Funcionário
+### Rota de Avatar (`/avatar`)
 
-**Endpoint:** `GET /avatar/:funcId`
+#### **Métodos Disponíveis:**
 
-**Descrição:** Retorna os dados da imagem de um funcionário específico.
-
-**Parâmetros:**
-- `funcId` (path, obrigatório): ID do funcionário
-
-**Resposta de Sucesso (200):**
-```json
-{
-  "sucesso": true,
-  "mensagem": "Imagem obtida com sucesso",
-  "data": {
-    "funcId": 1,
-    "nome": "João Silva",
-    "imagem": "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios/func-1-1715000000.jpg"
+##### **1. GET `/avatar/:funcId` - Obter Avatar**
+- **Descrição:** Recupera a imagem de perfil de um funcionário específico.
+- **Parâmetros:** 
+  - `funcId` (URL param): ID do funcionário.
+- **Resposta (200 OK):**
+  ```json
+  {
+    "sucesso": true,
+    "mensagem": "Imagem obtida com sucesso",
+    "data": {
+      "funcId": 1,
+      "nome": "João Silva",
+      "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
+    }
   }
-}
-```
+  ```
+- **Erros:**
+  - `404`: Funcionário não encontrado ou sem imagem.
+  - `500`: Erro ao processar requisição.
 
----
-
-### 2. Upload de Imagem
-
-**Endpoint:** `POST /avatar/:funcId`
-
-**Descrição:** Faz upload de uma imagem para um funcionário. Salva a URL no campo `imagem` da tabela `funcionarios`.
-
+##### **2. POST `/avatar/:funcId` - Upload de Avatar**
+- **Descrição:** Faz upload de uma nova imagem de perfil para um funcionário. Requer autenticação JWT.
+- **Autenticação:** Sim (middleware JWT verificado em `req.user.id`).
+- **Validações:**
+  - **Segurança:** Apenas o dono da conta (validação de `usuarioId`) pode fazer upload para seu próprio perfil.
+  - **Tipo de arquivo:** JPEG, PNG, GIF, WebP.
+  - **Tamanho máximo:** 5MB.
+- **Comportamento:**
+  1. Valida se o arquivo foi enviado.
+  2. Verifica permissão do usuário (segurança).
+  3. Remove imagem anterior (se existir).
+  4. Faz upload para Supabase Storage com path `{userId}/avatar.{extensão}`.
+  5. Gera URL pública.
+  6. Atualiza registro no banco de dados.
+  
 **Parâmetros:**
 - `funcId` (path, obrigatório): ID do funcionário
 - `avatar` (form-data, obrigatório): Arquivo de imagem
@@ -1066,26 +1075,93 @@ fetch('http://localhost:3000/avatar/1', {
 })
 .then(response => response.json())
 .then(data => console.log(data));
-```
+- **Resposta (200 OK):**
+  ```json
+  {
+    "sucesso": true,
+    "mensagem": "Imagem enviada com sucesso",
+    "data": {
+      "id": 1,
+      "nome": "João Silva",
+      "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
+    }
+  }
+  ```
+- **Erros:**
+  - `400`: Nenhum arquivo enviado.
+  - `403`: Usuário sem permissão para alterar a imagem.
+  - `404`: Funcionário não encontrado.
+  - `500`: Erro no upload ou banco de dados.
 
----
+##### **3. DELETE `/avatar/:funcId` - Deletar Avatar**
+- **Descrição:** Remove a imagem de perfil de um funcionário. Requer autenticação JWT.
+- **Autenticação:** Sim (middleware JWT verificado em `req.user.id`).
+- **Parâmetros:**
+  - `funcId` (URL param): ID do funcionário.
+- **Comportamento:**
+  1. Valida propriedade do recurso.
+  2. Remove arquivo do Supabase Storage.
+  3. Define campo `imagem` como `null` no banco de dados.
+- **Resposta (200 OK):**
+  ```json
+  {
+    "sucesso": true,
+    "mensagem": "Imagem deletada com sucesso",
+    "data": {
+      "id": 1,
+      "nome": "João Silva",
+      "imagem": null
+    }
+  }
+  ```
+- **Erros:**
+  - `403`: Sem permissão para deletar.
+  - `404`: Funcionário não encontrado ou sem imagem.
+  - `500`: Erro ao processar.
 
-### 3. Deletar Imagem
+##### **4. GET `/avatar` - Obter Todos os Avatares**
+- **Descrição:** Retorna lista de todos os funcionários que possuem imagem de perfil.
+- **Parâmetros:** Nenhum.
+- **Resposta (200 OK):**
+  ```json
+  {
+    "sucesso": true,
+    "mensagem": "Imagens obtidas com sucesso",
+    "data": [
+      {
+        "id": 1,
+        "nome": "João Silva",
+        "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/1/avatar.jpg"
+      },
+      {
+        "id": 2,
+        "nome": "Maria Santos",
+        "imagem": "https://[...].supabase.co/storage/v1/object/public/avatares/2/avatar.png"
+      }
+    ]
+  }
+  ```
+- **Erros:**
+  - `404`: Nenhuma imagem encontrada.
+  - `500`: Erro ao processar.
 
-**Endpoint:** `DELETE /avatar/:funcId`
+#### **Configuração de Upload (Multer):**
+- **Storage:** Memória (não persiste em disco local).
+- **File Filter:** Valida tipo de arquivo.
+- **Limite:** 5MB por arquivo.
+- **Campo esperado:** `avatar` (multipart form-data).
 
-**Descrição:** Remove a imagem do funcionário do Supabase e limpa o campo `imagem` no banco de dados.
+#### **Integração com Supabase:**
+- **Bucket:** `avatares` (definido em `BUCKET_NAME`).
+- **Path Storage:** `{userId}/avatar.{extensão}`.
+- **Política:** Substitui arquivo anterior automaticamente (upsert: true).
+- **URL Pública:** Gerada automaticamente após upload.
 
-**Parâmetros:**
-- `funcId` (path, obrigatório): ID do funcionário
-
----
-
-### 4. Obter Todas as Imagens
-
-**Endpoint:** `GET /avatar`
-
-**Descrição:** Retorna uma lista de todos os funcionários que possuem imagens.
+#### **Segurança:**
+- ✅ Autenticação JWT obrigatória para POST e DELETE.
+- ✅ Validação de propriedade: usuário só pode gerenciar seu próprio avatar.
+- ✅ Validação de tipo e tamanho de arquivo.
+- ✅ Limpeza automática de arquivos antigos.
 
 ---
 
