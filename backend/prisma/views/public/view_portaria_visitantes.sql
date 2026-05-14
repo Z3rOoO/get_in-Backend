@@ -4,7 +4,8 @@ SELECT
   e.nome AS empresa,
   s.nome AS setor,
   l."dataDeEntrada" AS entrada,
-  l."dataDeSaida" AS saida,
+  u.celular,
+  u.email,
   CASE
     WHEN (l."dataDeEntrada" IS NULL) THEN 'Pendente' :: text
     WHEN (l."dataDeSaida" IS NULL) THEN 'Dentro' :: text

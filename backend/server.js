@@ -29,6 +29,7 @@ import RequisicaoVisitanteRouter from './router/RequisicaoVisitanteRouter.js';
 import ViewRouter from './router/ViewRouter.js';
 import AvatarRouter from './router/AvatarRouter.js';
 import PortariaRouter from "./router/PortariaRouter.js"
+import SetoresRouter from "./router/SetoresRouter.js"
 
 // -------REGISTRO DAS ROTAS------- //
 
@@ -45,6 +46,7 @@ app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
 app.use('/avatar', AvatarRouter);
 app.use('/portaria', PortariaRouter)
+app.use('/setores', SetoresRouter)
 
 
 app.get("/health", (req, res) => {
