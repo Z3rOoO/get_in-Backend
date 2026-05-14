@@ -43,7 +43,7 @@ app.use('/requisicao-visitante', RequisicaoVisitanteRouter);
 app.use('/dispositivos', DispositivosRouter);
 app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
-app.use('/api/avatar', AvatarRouter);
+app.use('/avatar', AvatarRouter);
 app.use('/portaria', PortariaRouter)
 
 

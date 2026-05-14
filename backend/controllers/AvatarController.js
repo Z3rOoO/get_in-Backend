@@ -68,10 +68,16 @@ class AvatarController {
                 });
             }
 
-            // Verificar se o funcionário existe
+            // 🔐 usuário autenticado (vem do seu middleware JWT)
+            const userId = req.user.id;
+
+            // Buscar funcionário
             const funcionario = await prisma.funcionario.findUnique({
                 where: {
                     id: Number(funcId)
+                },
+                include: {
+                    usuario: true
                 }
             });
 
@@ -82,30 +88,39 @@ class AvatarController {
                 });
             }
 
-            // Gerar nome único para o arquivo
-            const timestamp = Date.now();
-            const random = Math.round(Math.random() * 1e9);
-            const fileExtension = req.file.originalname.split('.').pop();
-            const fileName = `func-${funcId}-${timestamp}-${random}.${fileExtension}`;
+            // 🔥 VALIDAR DONO (SEGURANÇA)
+            if (funcionario.usuarioId !== userId) {
+                return res.status(403).json({
+                    sucesso: false,
+                    mensagem: "Você não tem permissão para alterar esta imagem"
+                });
+            }
 
-            // Se o funcionário já tem imagem, deletar a antiga do Supabase
+            // 📁 path correto (obrigatório pra policy funcionar)
+            const fileExtension = req.file.originalname.split('.').pop();
+            const filePath = `${userId}/avatar.${fileExtension}`;
+
+            // 🧹 deletar imagem antiga (se existir)
             if (funcionario.imagem) {
                 try {
-                    const oldFileName = funcionario.imagem.split('/').pop();
-                    await supabase.storage
-                        .from(BUCKET_NAME)
-                        .remove([oldFileName]);
+                    const oldPath = funcionario.imagem.split(`/object/public/${BUCKET_NAME}/`)[1];
+
+                    if (oldPath) {
+                        await supabase.storage
+                            .from(BUCKET_NAME)
+                            .remove([oldPath]);
+                    }
                 } catch (error) {
                     console.error("Erro ao deletar imagem antiga:", error);
                 }
             }
 
-            // Upload do novo arquivo para o Supabase
-            const { data, error } = await supabase.storage
+            // 📤 upload com upsert (substitui automaticamente)
+            const { error } = await supabase.storage
                 .from(BUCKET_NAME)
-                .upload(fileName, req.file.buffer, {
+                .upload(filePath, req.file.buffer, {
                     contentType: req.file.mimetype,
-                    upsert: false
+                    upsert: true
                 });
 
             if (error) {
@@ -116,14 +131,14 @@ class AvatarController {
                 });
             }
 
-            // Obter URL pública do arquivo
+            // 🔗 gerar URL pública
             const { data: publicUrlData } = supabase.storage
                 .from(BUCKET_NAME)
-                .getPublicUrl(fileName);
+                .getPublicUrl(filePath);
 
             const imageUrl = publicUrlData.publicUrl;
 
-            // Salvar URL da imagem no banco de dados (tabela funcionario, campo imagem)
+            // 💾 salvar no banco
             const updatedFunc = await prisma.funcionario.update({
                 where: {
                     id: Number(funcId)
@@ -149,6 +164,7 @@ class AvatarController {
                     imagem: updatedFunc.imagem
                 }
             });
+
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
@@ -164,6 +180,7 @@ class AvatarController {
     static async deleteAvatar(req, res) {
         try {
             const { funcId } = req.params;
+            const userId = req.user.id;
 
             const funcionario = await prisma.funcionario.findUnique({
                 where: {
@@ -178,6 +195,14 @@ class AvatarController {
                 });
             }
 
+            // 🔐 validar dono
+            if (funcionario.usuarioId !== userId) {
+                return res.status(403).json({
+                    sucesso: false,
+                    mensagem: "Sem permissão"
+                });
+            }
+
             if (!funcionario.imagem) {
                 return res.status(404).json({
                     sucesso: false,
@@ -185,19 +210,16 @@ class AvatarController {
                 });
             }
 
-            // Extrair nome do arquivo da URL
-            const fileName = funcionario.imagem.split('/').pop();
+            // 📁 pegar path correto
+            const filePath = funcionario.imagem.split(`/object/public/${BUCKET_NAME}/`)[1];
 
-            // Deletar arquivo do Supabase
-            const { error } = await supabase.storage
-                .from(BUCKET_NAME)
-                .remove([fileName]);
-
-            if (error) {
-                console.error("Erro ao deletar arquivo do Supabase:", error);
+            if (filePath) {
+                await supabase.storage
+                    .from(BUCKET_NAME)
+                    .remove([filePath]);
             }
 
-            // Atualizar funcionário removendo referência à imagem
+            // 💾 limpar banco
             const updatedFunc = await prisma.funcionario.update({
                 where: {
                     id: Number(funcId)
@@ -223,6 +245,7 @@ class AvatarController {
                     imagem: updatedFunc.imagem
                 }
             });
+
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
