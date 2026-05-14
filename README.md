@@ -1075,6 +1075,7 @@ fetch('http://localhost:3000/avatar/1', {
 })
 .then(response => response.json())
 .then(data => console.log(data));
+```
 - **Resposta (200 OK):**
   ```json
   {
