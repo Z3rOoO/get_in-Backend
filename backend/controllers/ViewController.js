@@ -1,6 +1,21 @@
 import { prisma } from "../config/prisma.js";
+import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
 class ViewController {
+    /**
+     * Utilitário para gerar URL pública a partir do path salvo no banco
+     */
+    static getPublicUrl(path) {
+        if (!path) return null;
+        // Se já for uma URL completa, retorna ela mesma (compatibilidade)
+        if (path.startsWith('http')) return path;
+        
+        const { data } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(path);
+        return data.publicUrl;
+    }
+
     static async getRequisicoesConsolidadas(req, res) {
         try {
             const query = `
@@ -79,7 +94,14 @@ class ViewController {
                     LEFT JOIN funcionarios f ON u.id = f."idUsuario"
                     LEFT JOIN departamentos d ON f."idDepartamento" = d.id
             `;
-            const data = await prisma.$queryRawUnsafe(query);
+            const rawData = await prisma.$queryRawUnsafe(query);
+            
+            // Converter paths em URLs públicas
+            const data = rawData.map(item => ({
+                ...item,
+                foto_perfil: ViewController.getPublicUrl(item.foto_perfil)
+            }));
+
             return res.status(200).json({ sucesso: true, data });
         } catch (e) {
             return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar usuários detalhados", erro: e.message });

@@ -3,6 +3,17 @@ import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
 class AvatarController {
     /**
+     * Utilitário para gerar URL pública a partir do path salvo no banco
+     */
+    static getPublicUrl(path) {
+        if (!path) return null;
+        const { data } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(path);
+        return data.publicUrl;
+    }
+
+    /**
      * Obter imagem de um funcionário
      */
     static async getAvatar(req, res) {
@@ -42,7 +53,7 @@ class AvatarController {
                 data: {
                     funcId: funcionario.id,
                     nome: funcionario.usuario.nome,
-                    imagem: funcionario.imagem
+                    imagem: AvatarController.getPublicUrl(funcionario.imagem)
                 }
             });
         } catch (e) {
@@ -103,13 +114,9 @@ class AvatarController {
             // 🧹 deletar imagem antiga (se existir)
             if (funcionario.imagem) {
                 try {
-                    const oldPath = funcionario.imagem.split(`/object/public/${BUCKET_NAME}/`)[1];
-
-                    if (oldPath) {
-                        await supabase.storage
-                            .from(BUCKET_NAME)
-                            .remove([oldPath]);
-                    }
+                    await supabase.storage
+                        .from(BUCKET_NAME)
+                        .remove([funcionario.imagem]);
                 } catch (error) {
                     console.error("Erro ao deletar imagem antiga:", error);
                 }
@@ -131,20 +138,13 @@ class AvatarController {
                 });
             }
 
-            // 🔗 gerar URL pública
-            const { data: publicUrlData } = supabase.storage
-                .from(BUCKET_NAME)
-                .getPublicUrl(filePath);
-
-            const imageUrl = publicUrlData.publicUrl;
-
-            // 💾 salvar no banco
+            // 💾 salvar no banco apenas o PATH
             const updatedFunc = await prisma.funcionario.update({
                 where: {
                     id: Number(funcId)
                 },
                 data: {
-                    imagem: imageUrl
+                    imagem: filePath
                 },
                 include: {
                     usuario: {
@@ -161,7 +161,7 @@ class AvatarController {
                 data: {
                     id: updatedFunc.id,
                     nome: updatedFunc.usuario.nome,
-                    imagem: updatedFunc.imagem
+                    imagem: AvatarController.getPublicUrl(updatedFunc.imagem)
                 }
             });
 
@@ -210,14 +210,10 @@ class AvatarController {
                 });
             }
 
-            // 📁 pegar path correto
-            const filePath = funcionario.imagem.split(`/object/public/${BUCKET_NAME}/`)[1];
-
-            if (filePath) {
-                await supabase.storage
-                    .from(BUCKET_NAME)
-                    .remove([filePath]);
-            }
+            // 📁 remover do storage
+            await supabase.storage
+                .from(BUCKET_NAME)
+                .remove([funcionario.imagem]);
 
             // 💾 limpar banco
             const updatedFunc = await prisma.funcionario.update({
@@ -242,7 +238,7 @@ class AvatarController {
                 data: {
                     id: updatedFunc.id,
                     nome: updatedFunc.usuario.nome,
-                    imagem: updatedFunc.imagem
+                    imagem: null
                 }
             });
 
@@ -285,7 +281,7 @@ class AvatarController {
             const data = funcs.map(f => ({
                 id: f.id,
                 nome: f.usuario.nome,
-                imagem: f.imagem
+                imagem: AvatarController.getPublicUrl(f.imagem)
             }));
 
             return res.status(200).json({
