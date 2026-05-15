@@ -110,6 +110,17 @@ class ViewController {
             return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar tags detalhadas", erro: e.message });
         }
     }
+
+    static async getGestores(req, res){
+
+        const gestores = await prisma.view_gestores.findMany()
+
+        res.status(200).json({
+            sucesso: true,
+            data: gestores
+        })
+
+    }
 }
 
 export default ViewController;

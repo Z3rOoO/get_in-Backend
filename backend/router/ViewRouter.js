@@ -8,5 +8,6 @@ router.get("/requisicoes", AuthMiddleware, ViewController.getRequisicoesConsolid
 router.get("/logs", AuthMiddleware, ViewController.getLogsDetalhados);
 router.get("/usuarios", AuthMiddleware, ViewController.getUsuariosDetalhados);
 router.get("/tags", AuthMiddleware, ViewController.getTagsDetalhadas);
+router.get("/gestores", AuthMiddleware, ViewController.getGestores);
 
 export default router;

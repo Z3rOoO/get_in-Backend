@@ -195,6 +195,11 @@ view view_portaria_visitantes {
   status  String?
 }
 
+view view_gestores {
+  id     Int?
+  gestor String? @db.VarChar(150)
+}
+
 enum TipoFuncionario {
   func
   port
@@ -223,6 +228,5 @@ enum StatusAcesso {
 
 enum StatusSetor {
   Ativo
-  Restrito
   Inativo
 }
