@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import AvatarController from "../controllers/AvatarController.js";
+import { AuthMiddleware } from "../middleware/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -34,13 +35,13 @@ router.get("/:funcId", AvatarController.getAvatar);
  * POST /avatar/:funcId
  * Fazer upload de imagem para um funcionário
  */
-router.post("/:funcId", upload.single("avatar"), AvatarController.uploadAvatar);
+router.post("/:funcId", AuthMiddleware, upload.single("avatar"), AvatarController.uploadAvatar);
 
 /**
  * DELETE /avatar/:funcId
  * Deletar imagem de um funcionário
  */
-router.delete("/:funcId", AvatarController.deleteAvatar);
+router.delete("/:funcId", AuthMiddleware, AvatarController.deleteAvatar);
 
 /**
  * GET /avatar

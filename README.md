@@ -42,7 +42,7 @@ O **GET IN** é um backend desenvolvido para gerenciar o fluxo de pessoas em org
 - **Controle de Acesso:** validação por tag RFID, crachá, setor/departamento e status de requisição.
 - **Workflow de Requisições:** criação, aprovação, recusa e acompanhamento de solicitações de acesso interno e visita externa.
 - **Monitoramento:** registro de logs por usuário e dispositivo, com views consolidadas para consulta analítica.
-- **Upload de Avatar:** integração com Supabase Storage para armazenar imagens de funcionários.
+- **Upload de Avatar:** integração com Supabase Storage para armazenar imagens de funcionários, salvando apenas o caminho no banco de dados e retornando a URL pública completa.
 - **Integração com Dispositivos:** suporte a comunicação MQTT para retorno de autorização aos dispositivos físicos.
 
 ---
@@ -188,6 +188,30 @@ Quando o token não é enviado, está em formato inválido ou está expirado, o 
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+fetch('http://localhost:3000/auth/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    nome: "João Silva",
+    cpf: "12345678901",
+    celular: "(11) 98765-4321",
+    email: "joao.silva@example.com",
+    tipo: "func",
+    dataDeNascimento: "1990-01-01",
+    imagem: null,
+    senha: "senha_segura_123"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
 **Resposta Esperada (201 Created):**
 
 ```json
@@ -227,6 +251,28 @@ Quando o token não é enviado, está em formato inválido ou está expirado, o 
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+fetch('http://localhost:3000/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    email: "joao.silva@example.com",
+    senha: "senha_segura_123"
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+    // Salvar o token para uso em requisições futuras
+    localStorage.setItem('jwtToken', data.token);
+  })
+  .catch(error => console.error('Erro:', error));
+```
+
 **Resposta Esperada (200 OK):**
 
 ```json
@@ -260,6 +306,159 @@ Gerencia os dados básicos de identificação de usuários, incluindo funcionár
 | PUT | `/user/:id` | Sim | Atualizar dados do usuário |
 | DELETE | `/user/:id` | Sim | Remover usuário |
 
+#### 📌 GET `/user/` - Listar todos os usuários
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/user/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuários lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "nome": "João Silva",
+      "cpf": "12345678901",
+      "celular": "(11) 98765-4321",
+      "email": "joao.silva@example.com",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+      "idEmpresa": null,
+      "idDep": null
+    }
+  ]
+}
+```
+
+#### 📌 GET `/user/:id` - Buscar usuário por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 1;
+fetch(`http://localhost:3000/user/${userId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário lido com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "João Silva",
+    "cpf": "12345678901",
+    "celular": "(11) 98765-4321",
+    "email": "joao.silva@example.com",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idEmpresa": null,
+    "idDep": null
+  }
+}
+```
+
+#### 📌 GET `/user/name/:nome` - Buscar usuários por nome parcial
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userName = "João";
+fetch(`http://localhost:3000/user/name/${userName}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário lido com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "nome": "João Silva",
+      "cpf": "12345678901",
+      "celular": "(11) 98765-4321",
+      "email": "joao.silva@example.com",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+      "idEmpresa": null,
+      "idDep": null
+    }
+  ]
+}
+```
+
+#### 📌 GET `/user/cpf/:cpf` - Buscar usuários por CPF parcial
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userCpf = "123";
+fetch(`http://localhost:3000/user/cpf/${userCpf}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário lido com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "nome": "João Silva",
+      "cpf": "12345678901",
+      "celular": "(11) 98765-4321",
+      "email": "joao.silva@example.com",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+      "idEmpresa": null,
+      "idDep": null
+    }
+  ]
+}
+```
+
 #### 📌 POST `/user/` - Criar um usuário simples
 
 **Requisição:**
@@ -270,9 +469,31 @@ Gerencia os dados básicos de identificação de usuários, incluindo funcionár
   "cpf": "98765432109",
   "cel": "(11) 91234-5678",
   "email": "maria.souza@example.com",
-  "empresa": "Empresa Visitante",
   "idDep": 1
 }
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/user/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nome: "Maria Souza",
+    cpf: "98765432109",
+    cel: "(11) 91234-5678",
+    email: "maria.souza@example.com",
+    idDep: 1
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
 ```
 
 **Resposta Esperada (201 Created):**
@@ -287,6 +508,85 @@ Gerencia os dados básicos de identificação de usuários, incluindo funcionár
     "cpf": "98765432109",
     "celular": "(11) 91234-5678",
     "email": "maria.souza@example.com",
+    "idDep": 1
+  }
+}
+```
+
+#### 📌 PUT `/user/:id` - Atualizar dados do usuário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 2;
+fetch(`http://localhost:3000/user/${userId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nome: "Maria Antônia Souza",
+    cel: "(11) 99887-7665"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário atualizado com sucesso",
+  "data": {
+    "id": 2,
+    "nome": "Maria Antônia Souza",
+    "cpf": "98765432109",
+    "celular": "(11) 99887-7665",
+    "email": "maria.souza@example.com",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idEmpresa": null,
+    "idDep": 1
+  }
+}
+```
+
+#### 📌 DELETE `/user/:id` - Remover usuário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 2;
+fetch(`http://localhost:3000/user/${userId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Usuário deletado com sucesso",
+  "data": {
+    "id": 2,
+    "nome": "Maria Antônia Souza",
+    "cpf": "98765432109",
+    "celular": "(11) 99887-7665",
+    "email": "maria.souza@example.com",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idEmpresa": null,
     "idDep": 1
   }
 }
@@ -308,6 +608,155 @@ Gerencia registros funcionais vinculados a usuários. O tipo do funcionário pod
 | PUT | `/func/:id` | Sim | Atualizar funcionário |
 | DELETE | `/func/:id` | Sim | Remover funcionário |
 
+#### 📌 GET `/func/` - Listar funcionários
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/func/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionarios lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": null,
+      "tipo": "func",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "imagem": null,
+      "senhaHash": "$2b$10$...
+    }
+  ]
+}
+```
+
+#### 📌 GET `/func/:id` - Buscar funcionário por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcId = 1;
+fetch(`http://localhost:3000/func/${funcId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario lido com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": null,
+    "tipo": "func",
+    "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+    "imagem": null,
+    "senhaHash": "$2b$10$...
+  }
+}
+```
+
+#### 📌 GET `/func/name/:nome` - Buscar funcionário por nome
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcName = "João";
+fetch(`http://localhost:3000/func/name/${funcName}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario lido com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": null,
+      "tipo": "func",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "imagem": null,
+      "senhaHash": "$2b$10$...
+    }
+  ]
+}
+```
+
+#### 📌 GET `/func/cpf/:cpf` - Buscar funcionário por CPF
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcCpf = "123";
+fetch(`http://localhost:3000/func/cpf/${funcCpf}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario lido com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": null,
+      "tipo": "func",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "imagem": null,
+      "senhaHash": "$2b$10$...
+    }
+  ]
+}
+```
+
 #### 📌 POST `/func/` - Criar registro de funcionário
 
 **Requisição:**
@@ -321,6 +770,30 @@ Gerencia registros funcionais vinculados a usuários. O tipo do funcionário pod
   "imagem": null,
   "senha": "senha_segura_123"
 }
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/func/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idUsuario: 1,
+    idSetor: 2,
+    tipo: "func",
+    dataDeNascimento: "1990-01-01",
+    imagem: null,
+    senha: "senha_segura_123"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
 ```
 
 **Resposta Esperada (201 Created):**
@@ -339,6 +812,83 @@ Gerencia registros funcionais vinculados a usuários. O tipo do funcionário pod
 }
 ```
 
+#### 📌 PUT `/func/:id` - Atualizar funcionário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcId = 1;
+fetch(`http://localhost:3000/func/${funcId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idSetor: 3,
+    tipo: "ger"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario atualizado com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 3,
+    "tipo": "ger",
+    "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+    "imagem": null,
+    "senhaHash": "$2b$10$...
+  }
+}
+```
+
+#### 📌 DELETE `/func/:id` - Remover funcionário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcId = 1;
+fetch(`http://localhost:3000/func/${funcId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Funcionario deletado com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 3,
+    "tipo": "ger",
+    "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+    "imagem": null,
+    "senhaHash": "$2b$10$...
+  }
+}
+```
+
 ---
 
 ### 🏢 Departamentos (`/dep`)
@@ -353,6 +903,83 @@ Gerencia departamentos da organização. No modelo atual, departamentos podem ag
 | PUT | `/dep/:id` | Sim | Atualizar departamento |
 | DELETE | `/dep/:id` | Sim | Remover departamento |
 
+#### 📌 GET `/dep/` - Listar departamentos
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/dep/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Departamentos lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "nome": "Tecnologia",
+      "rua": null,
+      "UF": null,
+      "cidade": null,
+      "numero": null,
+      "CEP": null,
+      "tel": null,
+      "id_ger": 1
+    }
+  ]
+}
+```
+
+#### 📌 GET `/dep/:id` - Buscar departamento por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const depId = 1;
+fetch(`http://localhost:3000/dep/${depId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Departamento lido com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "Tecnologia",
+    "rua": null,
+    "UF": null,
+    "cidade": null,
+    "numero": null,
+    "CEP": null,
+    "tel": null,
+    "id_ger": 1
+  }
+}
+```
+
 #### 📌 POST `/dep/` - Criar novo departamento
 
 **Requisição:**
@@ -364,12 +991,112 @@ Gerencia departamentos da organização. No modelo atual, departamentos podem ag
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/dep/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nome: "Recursos Humanos",
+    id_ger: 1 // id do funcionário gestor
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
 **Resposta Esperada (200 OK):**
 
 ```json
 {
   "sucesso": true,
-  "mensagem": "Criado o departamento Tecnologia com sucesso!"
+  "mensagem": "Criado o departamento Recursos Humanos com sucesso!"
+}
+```
+
+#### 📌 PUT `/dep/:id` - Atualizar departamento
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const depId = 1;
+fetch(`http://localhost:3000/dep/${depId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nome: "TI e Inovação"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Departamento atualizado com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "TI e Inovação",
+    "rua": null,
+    "UF": null,
+    "cidade": null,
+    "numero": null,
+    "CEP": null,
+    "tel": null,
+    "id_ger": 1
+  }
+}
+```
+
+#### 📌 DELETE `/dep/:id` - Remover departamento
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const depId = 1;
+fetch(`http://localhost:3000/dep/${depId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Departamento deletado com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "TI e Inovação",
+    "rua": null,
+    "UF": null,
+    "cidade": null,
+    "numero": null,
+    "CEP": null,
+    "tel": null,
+    "id_ger": 1
+  }
 }
 ```
 
@@ -388,7 +1115,71 @@ Gerencia o ciclo de vida dos crachás. Ao criar um novo crachá, o status inicia
 | PUT | `/cracha/:id` | Sim | Atualizar status do crachá |
 | DELETE | `/cracha/:id` | Sim | Remover crachá |
 
-#### 📌 GET `/cracha/status/:status` - Buscar por status
+#### 📌 POST `/cracha/` - Criar crachá com status disponível
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/cracha/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachá criado com sucesso",
+  "data": {
+    "id": 1,
+    "status": "disponivel",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 GET `/cracha/` - Listar crachás
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/cracha/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachás lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "status": "disponivel",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/cracha/status/:status` - Filtrar crachás por status
 
 O parâmetro `status` aceita o valor completo ou os atalhos usados no controller.
 
@@ -401,11 +1192,143 @@ O parâmetro `status` aceita o valor completo ou os atalhos usados no controller
 | `perdido` | `perdido` |
 | `emUso` | `emUso` |
 
-#### 📌 PUT `/cracha/:id` - Atualizar status
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const status = "d"; // ou "disponivel"
+fetch(`http://localhost:3000/cracha/status/${status}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachás lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "status": "disponivel",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/cracha/:id` - Buscar crachá por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const crachaId = 1;
+fetch(`http://localhost:3000/cracha/${crachaId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachá lido com sucesso",
+  "data": {
+    "id": 1,
+    "status": "disponivel",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 PUT `/cracha/:id` - Atualizar status do crachá
+
+**Requisição:**
 
 ```json
 {
   "status": "emUso"
+}
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const crachaId = 1;
+fetch(`http://localhost:3000/cracha/${crachaId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    status: "emUso"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachá atualizado com sucesso",
+  "data": {
+    "id": 1,
+    "status": "emUso",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 DELETE `/cracha/:id` - Remover crachá
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const crachaId = 1;
+fetch(`http://localhost:3000/cracha/${crachaId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Crachá deletado com sucesso",
+  "data": {
+    "id": 1,
+    "status": "emUso",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+  }
 }
 ```
 
@@ -423,6 +1346,81 @@ Gerencia tags RFID vinculadas a usuários. As tags são usadas durante a valida�
 | PUT | `/tags/:id` | Sim | Atualizar tag |
 | DELETE | `/tags/:id` | Sim | Remover tag |
 
+#### 📌 GET `/tags/` - Listar tags
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/tags/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Tags lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "status": null,
+      "codigoTag": "RFID-ABC-123",
+      "temporario": false,
+      "validade": null,
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+      "dataDeDevolucao": null
+    }
+  ]
+}
+```
+
+#### 📌 GET `/tags/:id` - Buscar tag por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const tagId = 1;
+fetch(`http://localhost:3000/tags/${tagId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Tag lida com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "status": null,
+    "codigoTag": "RFID-ABC-123",
+    "temporario": false,
+    "validade": null,
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "dataDeDevolucao": null
+  }
+}
+```
+
 #### 📌 POST `/tags/` - Vincular nova tag
 
 **Requisição:**
@@ -436,6 +1434,28 @@ Gerencia tags RFID vinculadas a usuários. As tags são usadas durante a valida�
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/tags/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idUsuario: 1,
+    codigoTag: "RFID-XYZ-456",
+    temporario: false,
+    validade: null
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
 **Resposta Esperada (201 Created):**
 
 ```json
@@ -445,9 +1465,89 @@ Gerencia tags RFID vinculadas a usuários. As tags são usadas durante a valida�
   "data": {
     "id": 1,
     "idUsuario": 1,
+    "status": null,
     "codigoTag": "RFID-ABC-123",
     "temporario": false,
     "validade": null
+  }
+}
+```
+
+#### 📌 PUT `/tags/:id` - Atualizar tag
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const tagId = 1;
+fetch(`http://localhost:3000/tags/${tagId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    temporario: true,
+    validade: "2026-12-31T23:59:59.000Z"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Tag atualizada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "status": null,
+    "codigoTag": "RFID-ABC-123",
+    "temporario": true,
+    "validade": "2026-12-31T23:59:59.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "dataDeDevolucao": null
+  }
+}
+```
+
+#### 📌 DELETE `/tags/:id` - Remover tag
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const tagId = 1;
+fetch(`http://localhost:3000/tags/${tagId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Tag deletada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "status": null,
+    "codigoTag": "RFID-ABC-123",
+    "temporario": true,
+    "validade": "2026-12-31T23:59:59.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "dataDeDevolucao": null
   }
 }
 ```
@@ -468,7 +1568,150 @@ Gerencia solicitações de acesso interno de usuários a setores. O status da re
 | PUT | `/requisicao/:id` | Sim | Atualizar status da requisição |
 | DELETE | `/requisicao/:id` | Sim | Remover requisição |
 
+#### 📌 GET `/requisicao/` - Listar requisições de acesso
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/requisicao/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": 2,
+      "status": "pendente",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/requisicao/:id` - Buscar requisição por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao/${requisicaoId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição lida com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 2,
+    "status": "pendente",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 GET `/requisicao/func/:id` - Buscar requisições por usuário/funcionário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 1;
+fetch(`http://localhost:3000/requisicao/func/${userId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": 2,
+      "status": "pendente",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/requisicao/setor/:id` - Buscar requisições por setor
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const setorId = 2;
+fetch(`http://localhost:3000/requisicao/setor/${setorId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idSetor": 2,
+      "status": "pendente",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
 #### 📌 POST `/requisicao/` - Criar nova solicitação de acesso
+
+**Requisição:**
 
 ```json
 {
@@ -477,7 +1720,45 @@ Gerencia solicitações de acesso interno de usuários a setores. O status da re
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/requisicao/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idUsuario: 1,
+    idSetor: 2
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição criada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 2,
+    "status": "pendente",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
 #### 📌 PUT `/requisicao/:id` - Atualizar status
+
+**Requisição:**
 
 ```json
 {
@@ -485,21 +1766,252 @@ Gerencia solicitações de acesso interno de usuários a setores. O status da re
 }
 ```
 
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao/${requisicaoId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    status: "aprovado"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição atualizada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 2,
+    "status": "aprovado",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 DELETE `/requisicao/:id` - Remover requisição
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao/${requisicaoId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição deletada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 1,
+    "idSetor": 2,
+    "status": "aprovado",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z"
+  }
+}
+```
+
 ---
 
 ### 🧾 Requisições de Visitante (`/requisicao-visitante`)
 
-Gerencia solicitações de visita externa. Diferentemente da requisição interna, esta rota permite registrar motivo, validade, descrição e empresa de origem do visitante.
+Gerencia solicitações de acesso para visitantes externos. O status da requisição utiliza o enum `pendente`, `aprovado` ou `recusado`.
 
 | Método | Rota | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| GET | `/requisicao-visitante/` | Sim | Listar requisições de visitantes |
+| GET | `/requisicao-visitante/` | Sim | Listar requisições de visitante |
 | GET | `/requisicao-visitante/:id` | Sim | Buscar requisição de visitante por ID |
+| GET | `/requisicao-visitante/user/:idUsuario` | Sim | Buscar requisições de visitante por usuário |
+| GET | `/requisicao-visitante/setor/:idSetor` | Sim | Buscar requisições de visitante por setor |
 | POST | `/requisicao-visitante/` | Sim | Criar requisição de visitante |
-| PUT | `/requisicao-visitante/:id` | Sim | Atualizar requisição de visitante |
+| PUT | `/requisicao-visitante/:id` | Sim | Atualizar status da requisição de visitante |
 | DELETE | `/requisicao-visitante/:id` | Sim | Remover requisição de visitante |
 
+#### 📌 GET `/requisicao-visitante/` - Listar requisições de visitante
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/requisicao-visitante/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições de visitante lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 3,
+      "idSetor": 2,
+      "status": "pendente",
+      "motivo": "Reunião com equipe comercial",
+      "validade": "2026-05-20T18:00:00.000Z",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+      "descricao": "Visitante autorizado para reunião agendada",
+      "empresa": "Empresa Parceira"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/requisicao-visitante/:id` - Buscar requisição de visitante por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao-visitante/${requisicaoId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição de visitante lida com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 3,
+    "idSetor": 2,
+    "status": "pendente",
+    "motivo": "Reunião com equipe comercial",
+    "validade": "2026-05-20T18:00:00.000Z",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+    "descricao": "Visitante autorizado para reunião agendada",
+    "empresa": "Empresa Parceira"
+  }
+}
+```
+
+#### 📌 GET `/requisicao-visitante/user/:idUsuario` - Buscar requisições de visitante por usuário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 3;
+fetch(`http://localhost:3000/requisicao-visitante/user/${userId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições de visitante lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 3,
+      "idSetor": 2,
+      "status": "pendente",
+      "motivo": "Reunião com equipe comercial",
+      "validade": "2026-05-20T18:00:00.000Z",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+      "descricao": "Visitante autorizado para reunião agendada",
+      "empresa": "Empresa Parceira"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/requisicao-visitante/setor/:idSetor` - Buscar requisições de visitante por setor
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const setorId = 2;
+fetch(`http://localhost:3000/requisicao-visitante/setor/${setorId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisições de visitante lidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 3,
+      "idSetor": 2,
+      "status": "pendente",
+      "motivo": "Reunião com equipe comercial",
+      "validade": "2026-05-20T18:00:00.000Z",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+      "descricao": "Visitante autorizado para reunião agendada",
+      "empresa": "Empresa Parceira"
+    }
+  ]
+}
+```
+
 #### 📌 POST `/requisicao-visitante/` - Criar requisição de visitante
+
+**Requisição:**
 
 ```json
 {
@@ -510,6 +2022,30 @@ Gerencia solicitações de visita externa. Diferentemente da requisição intern
   "descricao": "Visitante autorizado para reunião agendada",
   "empresa": "Empresa Parceira"
 }
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/requisicao-visitante/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idUsuario: 3,
+    idSetor: 2,
+    motivo: "Reunião com equipe comercial",
+    validade: "2026-05-20T18:00:00.000Z",
+    descricao: "Visitante autorizado para reunião agendada",
+    empresa: "Empresa Parceira"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
 ```
 
 **Resposta Esperada (201 Created):**
@@ -530,6 +2066,86 @@ Gerencia solicitações de visita externa. Diferentemente da requisição intern
 }
 ```
 
+#### 📌 PUT `/requisicao-visitante/:id` - Atualizar status da requisição de visitante
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao-visitante/${requisicaoId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    status: "aprovado"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição de visitante atualizada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 3,
+    "idSetor": 2,
+    "status": "aprovado",
+    "motivo": "Reunião com equipe comercial",
+    "validade": "2026-05-20T18:00:00.000Z",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+    "descricao": "Visitante autorizado para reunião agendada",
+    "empresa": "Empresa Parceira"
+  }
+}
+```
+
+#### 📌 DELETE `/requisicao-visitante/:id` - Remover requisição de visitante
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const requisicaoId = 1;
+fetch(`http://localhost:3000/requisicao-visitante/${requisicaoId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Requisição de visitante deletada com sucesso",
+  "data": {
+    "id": 1,
+    "idUsuario": 3,
+    "idSetor": 2,
+    "status": "aprovado",
+    "motivo": "Reunião com equipe comercial",
+    "validade": "2026-05-20T18:00:00.000Z",
+    "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+    "descricao": "Visitante autorizado para reunião agendada",
+    "empresa": "Empresa Parceira"
+  }
+}
+```
+
 ---
 
 ### 🚪 Dispositivos (`/dispositivos`)
@@ -545,7 +2161,80 @@ Gerencia dispositivos físicos usados para validação de acesso e inclui endpoi
 | PUT | `/dispositivos/:id` | Sim | Atualizar dispositivo |
 | DELETE | `/dispositivos/:id` | Sim | Remover dispositivo |
 
-#### 📌 POST `/dispositivos/` - Criar novo dispositivo
+#### 📌 GET `/dispositivos/` - Listar dispositivos
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/dispositivos/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivos lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idSetor": 2,
+      "local": "Entrada Principal",
+      "dataManutencao": "2026-06-01T10:00:00.000Z",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+      "idDep": 1
+    }
+  ]
+}
+```
+
+#### 📌 GET `/dispositivos/:id` - Buscar dispositivo por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const dispositivoId = 1;
+fetch(`http://localhost:3000/dispositivos/${dispositivoId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivo lido com sucesso",
+  "data": {
+    "id": 1,
+    "idSetor": 2,
+    "local": "Entrada Principal",
+    "dataManutencao": "2026-06-01T10:00:00.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idDep": 1
+  }
+}
+```
+
+#### 📌 POST `/dispositivos/` - Criar dispositivo
+
+**Requisição:**
 
 ```json
 {
@@ -553,6 +2242,45 @@ Gerencia dispositivos físicos usados para validação de acesso e inclui endpoi
   "idDep": 1,
   "local": "Entrada Principal",
   "dataManutencao": "2026-06-01T10:00:00.000Z"
+}
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/dispositivos/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idSetor: 2,
+    idDep: 1,
+    local: "Entrada Secundária",
+    dataManutencao: "2026-07-01T10:00:00.000Z"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (201 Created):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivo criado com sucesso",
+  "data": {
+    "id": 1,
+    "idSetor": 2,
+    "local": "Entrada Principal",
+    "dataManutencao": "2026-06-01T10:00:00.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idDep": 1
+  }
 }
 ```
 
@@ -568,6 +2296,102 @@ Gerencia dispositivos físicos usados para validação de acesso e inclui endpoi
 | Requisição recusada | `200` com mensagem de acesso recusado pelo supervisor |
 | Requisição pendente | `200` com mensagem de aguardando verificação |
 | Sem permissão | `403` com mensagem de acesso negado ou solicitação ao supervisor |
+
+**Exemplo de `fetch`:**
+
+```javascript
+const dispositivoId = 1;
+const crachaCodigo = "RFID-ABC-123";
+fetch(`http://localhost:3000/dispositivos/${dispositivoId}/${crachaCodigo}`, {
+  method: 'GET'
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "ACESSO PERMITIDO"
+}
+```
+
+#### 📌 PUT `/dispositivos/:id` - Atualizar dispositivo
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const dispositivoId = 1;
+fetch(`http://localhost:3000/dispositivos/${dispositivoId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    local: "Entrada Principal - Revisado"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivo atualizado com sucesso",
+  "data": {
+    "id": 1,
+    "idSetor": 2,
+    "local": "Entrada Principal - Revisado",
+    "dataManutencao": "2026-06-01T10:00:00.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idDep": 1
+  }
+}
+```
+
+#### 📌 DELETE `/dispositivos/:id` - Remover dispositivo
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const dispositivoId = 1;
+fetch(`http://localhost:3000/dispositivos/${dispositivoId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Dispositivo deletado com sucesso",
+  "data": {
+    "id": 1,
+    "idSetor": 2,
+    "local": "Entrada Principal - Revisado",
+    "dataManutencao": "2026-06-01T10:00:00.000Z",
+    "dataDeCriacao": "2026-05-15T10:00:00.000Z",
+    "idDep": 1
+  }
+}
+```
 
 ---
 
@@ -585,7 +2409,150 @@ Gerencia registros de entrada e saída por usuário e dispositivo.
 | PUT | `/logs/:id` | Sim | Atualizar log |
 | DELETE | `/logs/:id` | Sim | Remover log |
 
+#### 📌 GET `/logs/` - Listar logs
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/logs/', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Logs lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idDispositivo": 1,
+      "idUsuario": 1,
+      "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+      "dataDeSaida": null
+    }
+  ]
+}
+```
+
+#### 📌 GET `/logs/:id` - Buscar log por ID
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const logId = 1;
+fetch(`http://localhost:3000/logs/${logId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Log lido com sucesso",
+  "data": {
+    "id": 1,
+    "idDispositivo": 1,
+    "idUsuario": 1,
+    "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+    "dataDeSaida": null
+  }
+}
+```
+
+#### 📌 GET `/logs/user/:idUsuario` - Buscar logs por usuário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const userId = 1;
+fetch(`http://localhost:3000/logs/user/${userId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Logs lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idDispositivo": 1,
+      "idUsuario": 1,
+      "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+      "dataDeSaida": null
+    }
+  ]
+}
+```
+
+#### 📌 GET `/logs/device/:idDispositivo` - Buscar logs por dispositivo
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const dispositivoId = 1;
+fetch(`http://localhost:3000/logs/device/${dispositivoId}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Logs lidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "idDispositivo": 1,
+      "idUsuario": 1,
+      "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+      "dataDeSaida": null
+    }
+  ]
+}
+```
+
 #### 📌 POST `/logs/` - Criar novo registro de log
+
+**Requisição:**
 
 ```json
 {
@@ -594,6 +2561,28 @@ Gerencia registros de entrada e saída por usuário e dispositivo.
   "dataDeEntrada": "2026-05-13T08:00:00.000Z",
   "dataDeSaida": null
 }
+```
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/logs/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    idDispositivo: 1,
+    idUsuario: 1,
+    dataDeEntrada: "2026-05-13T08:00:00.000Z",
+    dataDeSaida: null
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
 ```
 
 **Resposta Esperada (201 Created):**
@@ -612,36 +2601,172 @@ Gerencia registros de entrada e saída por usuário e dispositivo.
 }
 ```
 
+#### 📌 PUT `/logs/:id` - Atualizar log
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const logId = 1;
+fetch(`http://localhost:3000/logs/${logId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    dataDeSaida: "2026-05-13T17:00:00.000Z"
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Log atualizado com sucesso",
+  "data": {
+    "id": 1,
+    "idDispositivo": 1,
+    "idUsuario": 1,
+    "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+    "dataDeSaida": "2026-05-13T17:00:00.000Z"
+  }
+}
+```
+
+#### 📌 DELETE `/logs/:id` - Remover log
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const logId = 1;
+fetch(`http://localhost:3000/logs/${logId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Log deletado com sucesso",
+  "data": {
+    "id": 1,
+    "idDispositivo": 1,
+    "idUsuario": 1,
+    "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+    "dataDeSaida": "2026-05-13T17:00:00.000Z"
+  }
+}
+```
+
 ---
 
 ### 🖼️ Avatares (`/avatar`)
 
-Gerencia imagens de funcionários via upload em memória com Multer e armazenamento no Supabase Storage. São aceitos arquivos `JPEG`, `PNG`, `GIF` e `WebP`, com limite de **5 MB** por arquivo.
+Gerencia imagens de funcionários via upload em memória com Multer e armazenamento no Supabase Storage. O banco de dados agora armazena apenas o **caminho** do arquivo no Supabase, e a API retorna a **URL pública completa** para acesso. São aceitos arquivos `JPEG`, `PNG`, `GIF` e `WebP`, com limite de **5 MB** por arquivo.
 
 | Método | Rota | Autenticação | Descrição |
 | --- | --- | --- | --- |
 | GET | `/avatar/` | Não | Listar avatares cadastrados |
 | GET | `/avatar/:funcId` | Não | Obter avatar de um funcionário |
-| POST | `/avatar/:funcId` | Requer usuário no controller | Fazer upload de avatar |
-| DELETE | `/avatar/:funcId` | Requer usuário no controller | Remover avatar |
+| POST | `/avatar/:funcId` | Sim | Fazer upload de avatar |
+| DELETE | `/avatar/:funcId` | Sim | Remover avatar |
+
+#### 📌 GET `/avatar/` - Listar avatares cadastrados
+
+**Exemplo de `fetch`:**
+
+```javascript
+fetch('http://localhost:3000/avatar/', {
+  method: 'GET'
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Imagens obtidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "nome": "João Silva",
+      "imagem": "https://seu-projeto.supabase.co/storage/v1/object/public/usuarios/1/avatar.png"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/avatar/:funcId` - Obter avatar de um funcionário
+
+**Exemplo de `fetch`:**
+
+```javascript
+const funcId = 1;
+fetch(`http://localhost:3000/avatar/${funcId}`, {
+  method: 'GET'
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Imagem obtida com sucesso",
+  "data": {
+    "funcId": 1,
+    "nome": "João Silva",
+    "imagem": "https://seu-projeto.supabase.co/storage/v1/object/public/usuarios/1/avatar.png"
+  }
+}
+```
 
 #### 📌 POST `/avatar/:funcId` - Upload de imagem de funcionário
 
-**Requisição:** use `multipart/form-data` com o campo `avatar`.
+**Descrição:** Requer autenticação JWT. Use `multipart/form-data` com o campo `avatar`.
+
+**Exemplo de `fetch`:**
 
 ```javascript
+const token = localStorage.getItem('jwtToken');
+const funcId = 1;
+const fileInput = document.querySelector('#avatarFileInput'); // Exemplo de input de arquivo HTML
+
 const formData = new FormData();
 formData.append('avatar', fileInput.files[0]);
 
-fetch('http://localhost:3000/avatar/1', {
+fetch(`http://localhost:3000/avatar/${funcId}`, {
   method: 'POST',
   headers: {
-    Authorization: `Bearer ${token}`
+    'Authorization': `Bearer ${token}`
   },
   body: formData
 })
   .then(response => response.json())
-  .then(data => console.log(data));
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
 ```
 
 **Resposta Esperada (200 OK):**
@@ -658,7 +2783,39 @@ fetch('http://localhost:3000/avatar/1', {
 }
 ```
 
-> **Nota técnica:** o controller de upload e exclusão utiliza `req.user.id` para validar o dono da imagem. Caso essas rotas sejam mantidas sem middleware no router, será necessário adicionar autenticação no router ou ajustar o controller para evitar falhas por `req.user` indefinido.
+#### 📌 DELETE `/avatar/:funcId` - Remover avatar
+
+**Descrição:** Requer autenticação JWT.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+const funcId = 1;
+fetch(`http://localhost:3000/avatar/${funcId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Imagem deletada com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "João Silva",
+    "imagem": null
+  }
+}
+```
 
 ---
 
@@ -675,6 +2832,8 @@ Fornece endpoints de leitura para consultas consolidadas usadas em dashboards, r
 
 #### 📌 GET `/views/requisicoes` - Requisições consolidadas
 
+**Descrição:** Retorna uma lista consolidada de requisições de acesso interno e externo.
+
 **Campos retornados:**
 
 | Campo | Descrição |
@@ -688,17 +2847,173 @@ Fornece endpoints de leitura para consultas consolidadas usadas em dashboards, r
 | `empresa_visitante` | Campo consolidado para dados do visitante |
 | `validade_visita` | Data de validade da visita externa |
 
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/views/requisicoes', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 1,
+      "idDepartamento": 2,
+      "status": "aprovado",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+      "tipo_requisicao": "Acesso Interno",
+      "empresa_visitante": null,
+      "validade_visita": null
+    },
+    {
+      "id": 1,
+      "idUsuario": 3,
+      "idDepartamento": 2,
+      "status": "aprovado",
+      "dataDaRequisicao": "2026-05-15T10:00:00.000Z",
+      "tipo_requisicao": "Visita Externa",
+      "empresa_visitante": "Empresa Parceira",
+      "validade_visita": "2026-05-20T18:00:00.000Z"
+    }
+  ]
+}
+```
+
 #### 📌 GET `/views/logs` - Logs detalhados
 
-Retorna `log_id`, `usuario_nome`, `usuario_cpf`, `local_dispositivo`, `dataDeEntrada`, `dataDeSaida` e `departamento_usuario`.
+**Descrição:** Retorna logs de acesso enriquecidos com informações de usuário, dispositivo e departamento.
+
+**Campos retornados:** `log_id`, `usuario_nome`, `usuario_cpf`, `local_dispositivo`, `dataDeEntrada`, `dataDeSaida` e `departamento_usuario`.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/views/logs', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "log_id": 1,
+      "usuario_nome": "João Silva",
+      "usuario_cpf": "12345678901",
+      "local_dispositivo": "Entrada Principal",
+      "dataDeEntrada": "2026-05-13T08:00:00.000Z",
+      "dataDeSaida": "2026-05-13T17:00:00.000Z",
+      "departamento_usuario": "TI e Inovação"
+    }
+  ]
+}
+```
 
 #### 📌 GET `/views/usuarios` - Usuários detalhados
 
-Retorna perfil consolidado com dados do usuário, cargo, nascimento, foto de perfil, departamento e data de criação.
+**Descrição:** Retorna um perfil consolidado de usuários, incluindo dados de funcionário e departamento, com a `foto_perfil` como URL pública completa.
+
+**Campos retornados:** `usuario_id`, `usuario_nome`, `email`, `cpf`, `celular`, `cargo`, `dataDeNascimento`, `foto_perfil` (URL pública), `departamento_nome` e `dataDeCriacao`.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/views/usuarios', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "usuario_id": 1,
+      "usuario_nome": "João Silva",
+      "email": "joao.silva@example.com",
+      "cpf": "12345678901",
+      "celular": "(11) 98765-4321",
+      "cargo": "ger",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "foto_perfil": "https://seu-projeto.supabase.co/storage/v1/object/public/usuarios/1/avatar.png",
+      "departamento_nome": "TI e Inovação",
+      "dataDeCriacao": "2026-05-15T10:00:00.000Z"
+    }
+  ]
+}
+```
 
 #### 📌 GET `/views/tags` - Tags detalhadas
 
-Retorna `codigoTag`, dados do usuário, status do crachá, temporariedade, validade e departamento vinculado.
+**Descrição:** Retorna tags RFID com informações detalhadas do usuário, status do crachá, temporariedade, validade e departamento vinculado.
+
+**Campos retornados:** `codigoTag`, `usuario_id`, `usuario_nome`, `status_cracha`, `temporario`, `validade_tag` e `departamento_vinculado`.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem('jwtToken');
+fetch('http://localhost:3000/views/tags', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "codigoTag": "RFID-ABC-123",
+      "usuario_id": 1,
+      "usuario_nome": "João Silva",
+      "status_cracha": "emUso",
+      "temporario": true,
+      "validade_tag": "2026-12-31T23:59:59.000Z",
+      "departamento_vinculado": "TI e Inovação"
+    }
+  ]
+}
+```
 
 ---
 
@@ -711,6 +3026,17 @@ Fornece consulta voltada para acompanhamento de visitantes na portaria.
 | GET | `/portaria/vlocal` | Não | Listar visitantes com informações de entrada, saída e status |
 
 #### 📌 GET `/portaria/vlocal` - Visitantes no local
+
+**Exemplo de `fetch`:**
+
+```javascript
+fetch('http://localhost:3000/portaria/vlocal', {
+  method: 'GET'
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Erro:', error));
+```
 
 **Resposta Esperada (200 OK):**
 
@@ -740,7 +3066,7 @@ O schema atual utiliza PostgreSQL e define modelos para usuários, departamentos
 ### Principais Entidades:
 
 | Entidade | Tabela/View | Descrição |
-| --- | --- | --- |
+| --- | --- |
 | `Usuario` | `usuarios` | Dados básicos de identificação e contato |
 | `Departamento` | `departamentos` | Estrutura organizacional principal |
 | `Funcionario` | `funcionarios` | Dados funcionais, cargo, setor e senha hash |
