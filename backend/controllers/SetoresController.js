@@ -42,6 +42,24 @@ class SetoresController {
             })
         }
 
+        if (idGestor != null) {
+
+            const gestor = await prisma.funcionario.findFirst({
+                where: {
+                    idUsuario: idGestor,
+                    tipo: "ger"
+                }
+            })
+
+
+            if (!gestor) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "Gestor não encontrado"
+                })
+            }
+        }
+
         // LISTA OS SETORES EXISTENTES PARA VER SE O NOME DO SETOR JÁ EXISTE
         const setor = await prisma.setores.findUnique({
             where: { nome: nome }
