@@ -135,6 +135,7 @@ model setores {
   dataDeCriacao                               DateTime             @default(now())
   idDep                                       Int?
   acesso                                      StatusAcesso
+  status                                      StatusSetor
   dispositivos                                Dispositivo[]
   funcionarios_funcionarios_idSetorTosetores  Funcionario[]        @relation("funcionarios_idSetorTosetores")
   requisicoes_de_acessos                      RequisicaoDeAcesso[]
@@ -218,4 +219,10 @@ enum StatusAcesso {
   Liberado
   Restrito
   Bloqueado
+}
+
+enum StatusSetor {
+  Ativo
+  Restrito
+  Inativo
 }

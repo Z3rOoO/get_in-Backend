@@ -32,7 +32,7 @@ class SetoresController {
     }
 
     static async create(req, res) {
-        const { nome, idGestor, acesso } = req.body
+        const { nome, idGestor, acesso, status } = req.body
 
         // VERIFICA SE O NOME DO SETOR FOI FORNECIDO
         if (!nome) {
@@ -80,7 +80,8 @@ class SetoresController {
                 nome: nome,
                 idGestor: idGestor,
                 idDep: 1,
-                acesso: acesso
+                acesso: acesso,
+                status: status || "Ativo"
             }
         })
 
