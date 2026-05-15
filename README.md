@@ -96,7 +96,7 @@ npm install
 
 ### 3. Variáveis de Ambiente
 
-Crie um arquivo `.env` dentro da pasta `backend/`. O repositório mantém um arquivo de referência chamado `dotenvexample`; ajuste os valores conforme o ambiente utilizado.
+Crie um arquivo `.env` dentro da pasta `backend/`. O repositório mantém arquivos de referência chamados `.env.example` e `dotenvexample`; copie um deles e ajuste os valores conforme o ambiente utilizado.
 
 ```env
 PORT=8080
@@ -109,7 +109,7 @@ SUPABASE_URL="https://seu-projeto.supabase.co"
 SUPABASE_KEY="sua_chave_do_supabase"
 ```
 
-> **Observação:** o arquivo `dotenvexample` ainda contém variáveis legadas de conexão MySQL. A configuração ativa do Prisma utiliza `DATABASE_URL` com provider `postgresql`, conforme definido em `backend/prisma/schema.prisma` e `backend/config/prisma.js`.
+> **Observação:** a configuração ativa do Prisma utiliza `DATABASE_URL` com provider `postgresql`, conforme definido em `backend/prisma/schema.prisma`, `backend/prisma.config.ts` e `backend/config/prisma.js`. Variáveis antigas como `DB_HOST`, `DB_USER` e `DB_NAME` não são utilizadas pelo backend atual.
 
 ### 4. Configurar o Banco de Dados
 
@@ -122,10 +122,16 @@ npx prisma generate
 
 ### 5. Iniciar o Servidor
 
-O `package.json` atual não define scripts `dev` ou `start`. Portanto, em ambiente local, o servidor pode ser iniciado diretamente pelo arquivo principal.
+O `package.json` define scripts para execução local. Depois de configurar o `.env`, inicie o servidor com:
 
 ```bash
-node server.js
+npm start
+```
+
+Para desenvolvimento com reinício automático em mudanças de arquivo, use:
+
+```bash
+npm run dev
 ```
 
 Por padrão, a API utiliza a porta definida em `PORT`. Caso a variável não seja informada, o servidor usa a porta `3000`.
