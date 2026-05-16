@@ -2,7 +2,6 @@ SELECT
   u.id,
   u.nome,
   e.nome AS empresa,
-  s.nome AS setor,
   l."dataDeEntrada" AS entrada,
   u.celular,
   u.email,
@@ -16,19 +15,19 @@ FROM
     (
       (
         (
-          (
-            usuarios u
-            LEFT JOIN funcionarios f ON ((u.id = f."idUsuario"))
-          )
-          LEFT JOIN empresas e ON ((u."idEmpresa" = e.id))
+          usuarios u
+          LEFT JOIN funcionarios f ON ((u.id = f."idUsuario"))
         )
-        LEFT JOIN LOGS l ON ((l."idUsuario" = u.id))
+        LEFT JOIN empresas e ON ((u."idEmpresa" = e.id))
       )
-      LEFT JOIN dispositivos d ON ((l."idDispositivo" = d.id))
+      LEFT JOIN LOGS l ON ((l."idUsuario" = u.id))
     )
-    LEFT JOIN setores s ON ((d."idSetor" = s.id))
+    LEFT JOIN dispositivos d ON ((l."idDispositivo" = d.id))
   )
 WHERE
-  (f."idUsuario" IS NULL)
+  (
+    (f."idUsuario" IS NULL)
+    AND (d.id = 10)
+  )
 ORDER BY
   l."dataDeEntrada" DESC;

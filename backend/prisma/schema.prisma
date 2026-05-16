@@ -88,13 +88,13 @@ model RequisicaoDeAcesso {
 
 model Dispositivo {
   id             Int          @id @default(autoincrement())
-  idSetor        Int
+  idSetor        Int?
   local          String?      @db.VarChar(150)
   dataManutencao DateTime?
   dataDeCriacao  DateTime     @default(now())
   idDep          Int
   departamentos  Departamento @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento")
-  setores        setores      @relation(fields: [idSetor], references: [id])
+  setores        setores?     @relation(fields: [idSetor], references: [id], onDelete: Restrict)
   logs           Log[]
 
   @@map("dispositivos")
@@ -188,7 +188,6 @@ view view_portaria_visitantes {
   id      Int?
   nome    String?   @db.VarChar(150)
   empresa String?   @db.VarChar
-  setor   String?   @db.VarChar(100)
   entrada DateTime?
   celular String?   @db.VarChar(20)
   email   String?   @db.VarChar(150)
@@ -229,4 +228,9 @@ enum StatusAcesso {
 enum StatusSetor {
   Ativo
   Inativo
+}
+
+enum TipoLog {
+  port
+  disp
 }
