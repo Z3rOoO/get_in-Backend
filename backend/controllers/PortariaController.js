@@ -22,7 +22,7 @@ class PortariaController {
 
     }
 
-    static async readDependencias(req, res) {
+    static async readPendencias(req, res) {
 
         try {
 
