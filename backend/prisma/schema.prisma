@@ -199,6 +199,14 @@ view view_gestores {
   gestor String? @db.VarChar(150)
 }
 
+view view_portaria_pendencias {
+  nome        String?           @db.VarChar(150)
+  empresas    String?           @db.VarChar
+  setores     String?           @db.VarChar(100)
+  motivo      String?           @db.VarChar(255)
+  solicitacao StatusRequisicao?
+}
+
 enum TipoFuncionario {
   func
   port
