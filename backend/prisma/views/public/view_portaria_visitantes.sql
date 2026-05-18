@@ -28,7 +28,6 @@ WHERE
   (
     (f."idUsuario" IS NULL)
     AND (d.id = 10)
-    AND (l."dataDeSaida" IS NULL)
   )
 ORDER BY
   l."dataDeEntrada" DESC;

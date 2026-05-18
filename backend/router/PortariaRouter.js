@@ -4,8 +4,8 @@ import PortariaController from '../controllers/PortariaController.js';
 
 const router = express.Router();
 
-router.get('/vlocal',  PortariaController.readVisitanteLocal);
-router.get('/pendencias',  PortariaController.readPendencias);
+router.get('/vlocal',  Auth, PortariaController.readVisitanteLocal);
+router.get('/pendencias',  Auth, PortariaController.readPendencias);
 
 
 

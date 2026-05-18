@@ -30,6 +30,8 @@ import ViewRouter from './router/ViewRouter.js';
 import AvatarRouter from './router/AvatarRouter.js';
 import PortariaRouter from "./router/PortariaRouter.js"
 import SetoresRouter from "./router/SetoresRouter.js"
+import VisitanteRouter from "./router/VisitanteRouter.js"
+import EmpresasRouter from "./router/EmpresaRouter.js"
 
 // -------REGISTRO DAS ROTAS------- //
 
@@ -41,12 +43,14 @@ app.use('/cracha', CrachaRouter);
 app.use('/tags', TagsRouter);
 app.use('/requisicao', RequisicaoFuncRouter);
 app.use('/requisicao-visitante', RequisicaoVisitanteRouter);
+app.use('/visitante', VisitanteRouter)
 app.use('/dispositivos', DispositivosRouter);
 app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
 app.use('/avatar', AvatarRouter);
 app.use('/portaria', PortariaRouter)
 app.use('/setores', SetoresRouter)
+app.use('/empresas', EmpresasRouter)
 
 
 app.get("/health", (req, res) => {
