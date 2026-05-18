@@ -18,32 +18,7 @@ class ViewController {
 
     static async getRequisicoesConsolidadas(req, res) {
         try {
-            const query = `
-                SELECT
-                    id,
-                    "idUsuario",
-                    "idDepartamento",
-                    status,
-                    "dataDaRequisicao",
-                    'Acesso Interno' AS tipo_requisicao,
-                    NULL AS empresa_visitante,
-                    NULL AS validade_visita
-                FROM
-                    requisicoes_de_acessos
-                UNION ALL
-                SELECT
-                    id,
-                    "idUsuario",
-                    "idDepartamento",
-                    status,
-                    "dataDaRequisicao",
-                    'Visita Externa' AS tipo_requisicao,
-                    motivo AS empresa_visitante,
-                    validade AS validade_visita
-                FROM
-                    requisicoes_de_visitas
-            `;
-            const data = await prisma.$queryRawUnsafe(query);
+            const data = await prisma.view_central_requisicoes.findMany();
             return res.status(200).json({ sucesso: true, data });
         } catch (e) {
             return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar requisições consolidadas", erro: e.message });
