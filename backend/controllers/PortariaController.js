@@ -324,8 +324,80 @@ class PortariaController {
     static async readPendencias(req, res) {
 
         try {
+            const requisicoes = await prisma.requisicaoDeVisita.findMany({
+                where: { status: "pendente" },
+                include: {
+                    usuario: {
+                        include: { empresas: true }
+                    },
+                    setores: true
+                },
+                orderBy: [
+                    { dataDaRequisicao: "desc" },
+                    { id: "desc" }
+                ]
+            })
 
-            const visitantes = await prisma.view_portaria_pendencias.findMany()
+            const visitantesPorIdentidade = new Map()
+
+            for (const requisicao of requisicoes) {
+                const usuario = requisicao.usuario || {}
+                const identidade = String(
+                    requisicao.idUsuario ||
+                    usuario.cpf ||
+                    usuario.email ||
+                    usuario.nome ||
+                    requisicao.id
+                )
+                const setor = requisicao.setores?.nome || null
+                const visitanteAtual = visitantesPorIdentidade.get(identidade)
+
+                if (!visitanteAtual) {
+                    visitantesPorIdentidade.set(identidade, {
+                        id: requisicao.id,
+                        ids: [requisicao.id],
+                        idUsuario: requisicao.idUsuario,
+                        visitante: usuario.nome || null,
+                        nome: usuario.nome || null,
+                        cpf: usuario.cpf || null,
+                        empresa: requisicao.empresa || usuario.empresas?.nome || null,
+                        setor,
+                        setores: setor ? [setor] : [],
+                        motivo: requisicao.motivo || null,
+                        descricao: requisicao.descricao || null,
+                        observacoes: requisicao.descricao || null,
+                        solicitacao: requisicao.status,
+                        status: requisicao.status,
+                        dataDaRequisicao: requisicao.dataDaRequisicao,
+                        validade: requisicao.validade,
+                        telefone: usuario.celular || null,
+                        celular: usuario.celular || null,
+                        email: usuario.email || null
+                    })
+                    continue
+                }
+
+                visitanteAtual.ids.push(requisicao.id)
+
+                if (setor && !visitanteAtual.setores.includes(setor)) {
+                    visitanteAtual.setores.push(setor)
+                    visitanteAtual.setor = visitanteAtual.setores.join(", ")
+                }
+
+                if (!visitanteAtual.motivo && requisicao.motivo) {
+                    visitanteAtual.motivo = requisicao.motivo
+                }
+
+                if (!visitanteAtual.descricao && requisicao.descricao) {
+                    visitanteAtual.descricao = requisicao.descricao
+                    visitanteAtual.observacoes = requisicao.descricao
+                }
+            }
+
+            const visitantes = Array.from(visitantesPorIdentidade.values()).map((visitante) => ({
+                ...visitante,
+                setor: visitante.setores.join(", ") || visitante.setor
+            }))
 
             return res.status(200).json({
                 sucesso: true,
