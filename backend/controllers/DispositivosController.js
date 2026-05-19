@@ -194,7 +194,7 @@ class DispositivosController {
                     where: {
                         id: Number(id)
                     }, select: {
-                        idDepartamento: true
+                        idSetor: true
                     }
                 })
 
@@ -231,7 +231,7 @@ class DispositivosController {
                         idUsuario: usuario.idUsuario,
                     },
                     select: {
-                        idDepartamento: true
+                        idSetor: true
                     }
                 })
 
