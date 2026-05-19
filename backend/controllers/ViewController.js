@@ -1,21 +1,14 @@
 import { prisma } from "../config/prisma.js";
 import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
+const url = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+
+
 class ViewController {
     /**
      * Utilitário para gerar URL pública a partir do path salvo no banco
      */
-    static getPublicUrl(path) {
-        if (!path) return null;
-        // Se já for uma URL completa, retorna ela mesma (compatibilidade)
-        if (path.startsWith('http')) return path;
-        
-        const { data } = supabase.storage
-            .from(BUCKET_NAME)
-            .getPublicUrl(path);
-        return data.publicUrl;
-    }
-
+  
     static async getRequisicoesConsolidadas(req, res) {
         try {
             const data = await prisma.view_central_requisicoes.findMany();
@@ -57,7 +50,7 @@ class ViewController {
             // Converter paths em URLs públicas
             const data = rawData.map(item => ({
                 ...item,
-                foto_perfil: ViewController.getPublicUrl(item.foto_perfil)
+                foto_perfil: item.foto_perfil ? `${url}/${item.foto_perfil}` : null
             }));
 
             return res.status(200).json({ sucesso: true, data });
