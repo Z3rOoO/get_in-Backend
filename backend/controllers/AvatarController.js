@@ -1,16 +1,15 @@
 import { prisma } from "../config/prisma.js";
 import { supabase, BUCKET_NAME } from "../config/supabase.js";
 
+const url = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+
 class AvatarController {
     /**
      * Utilitário para gerar URL pública a partir do path salvo no banco
      */
     static getPublicUrl(path) {
         if (!path) return null;
-        const { data } = supabase.storage
-            .from(BUCKET_NAME)
-            .getPublicUrl(path);
-        return data.publicUrl;
+        return `${url}/${path}`;
     }
 
     /**
