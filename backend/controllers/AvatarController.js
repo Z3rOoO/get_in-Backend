@@ -99,7 +99,7 @@ class AvatarController {
             }
 
             // 🔥 VALIDAR DONO (SEGURANÇA)
-            if (funcionario.usuarioId !== userId) {
+            if (funcionario.idUsuario !== userId) {
                 return res.status(403).json({
                     sucesso: false,
                     mensagem: "Você não tem permissão para alterar esta imagem"
@@ -195,7 +195,7 @@ class AvatarController {
             }
 
             // 🔐 validar dono
-            if (funcionario.usuarioId !== userId) {
+            if (funcionario.idUsuario !== userId) {
                 return res.status(403).json({
                     sucesso: false,
                     mensagem: "Sem permissão"
