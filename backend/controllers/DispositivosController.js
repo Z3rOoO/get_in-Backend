@@ -225,6 +225,15 @@ class DispositivosController {
                         mensagem: "CRACHA NAO CADASTRADO NO SISTEMA"
                     })
                 }
+                if (usuario == null) {
+
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/USUARIO NÃO VINCULADO AO CRACHA")
+
+                    return res.status(404).json({
+                        sucesso: false,
+                        mensagem: "USUARIO NÃO VINCULADO AO CRACHA"
+                    })
+                }
 
                 const departamento = await prisma.funcionario.findMany({
                     where: {
@@ -235,12 +244,12 @@ class DispositivosController {
                     }
                 })
 
-                if (!departamento) { // verifica se o usuario tem um departamento associado, se não tiver, retorna que o usuario não tem departamento
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/USUARIO SEM DEPARTAMENTO ASSOCIADO")
+                if (!departamento) { // verifica se o usuario tem um setor associado, se não tiver, retorna que o usuario não tem setor
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/USUARIO SEM SETOR ASSOCIADO")
 
                     return res.status(404).json({
                         sucesso: false,
-                        mensagem: "USUARIO SEM DEPARTAMENTO ASSOCIADO"
+                        mensagem: "USUARIO SEM SETOR ASSOCIADO"
                     })
                 }
 
