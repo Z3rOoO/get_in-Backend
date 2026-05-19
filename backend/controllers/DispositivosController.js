@@ -186,7 +186,7 @@ class DispositivosController {
 
             await client.on("connect", async () => {
                 console.log("conectou aqui na api")
-                client.subscribe(`dispositivos/${id}`)
+                client.subscribe(`get-in-3td/dispositivos/${id}`)
 
 
 
@@ -200,7 +200,7 @@ class DispositivosController {
 
                 if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
 
-                    client.publish(`dispositivos/${id}`, "false/ERRO, DISPOSITIVO NÃO VINCULADO")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO, DISPOSITIVO NÃO VINCULADO")
 
                     return res.status(404).json({
                         sucesso: false,
@@ -218,7 +218,7 @@ class DispositivosController {
 
                 if (!usuario) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que o cracha não é cadastrado
 
-                    client.publish(`dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO")
 
                     return res.status(404).json({
                         sucesso: false,
@@ -236,7 +236,7 @@ class DispositivosController {
                 })
 
                 if (!departamento) { // verifica se o usuario tem um departamento associado, se não tiver, retorna que o usuario não tem departamento
-                    client.publish(`dispositivos/${id}`, "false/USUARIO SEM DEPARTAMENTO ASSOCIADO")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/USUARIO SEM DEPARTAMENTO ASSOCIADO")
 
                     return res.status(404).json({
                         sucesso: false,
@@ -259,21 +259,21 @@ class DispositivosController {
 
                 if (requisicao) {
                     if (requisicao.status === "aprovado") {
-                        client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
+                        client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
                         return res.status(200).json({
                             sucesso: true,
                             mensagem: "ACESSO PERMITIDO"
                         })
                     }
                     if (requisicao.status === "recusado") {
-                        client.publish(`dispositivos/${id}`, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR")
+                        client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR")
                         return res.status(200).json({
                             sucesso: false,
                             mensagem: "ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR"
                         })
                     }
                     if (requisicao.status === "pendente") {
-                        client.publish(`dispositivos/${id}`, "/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
+                        client.publish(`get-in-3td/dispositivos/${id}`, "/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
                         return res.status(200).json({
                             sucesso: false,
                             mensagem: "AGUARDANDO VERIFICAÇÃO DO SUPERVISOR"
@@ -290,14 +290,14 @@ class DispositivosController {
                     })
 
                     if (funcionario) {
-                        client.publish(`dispositivos/${id}`, "aguarde/DEPARTAMENTO NÃO AUTORIZADO, SOLICITANDO ACESSO AO SUPERVISOR.")
+                        client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/DEPARTAMENTO NÃO AUTORIZADO, SOLICITANDO ACESSO AO SUPERVISOR.")
                         return res.status(403).json({
                             sucesso: false,
                             mensagem: "DEPARTAMENTO NÃO AUTORIZADO, SOLICITADO ACESSO AO SUPERVISOR."
                         })
                     }
 
-                    client.publish(`dispositivos/${id}`, "false/ACESSO NEGADO")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO NEGADO")
                     return res.status(403).json({
                         sucesso: false,
                         mensagem: "ACESSO NEGADO"
@@ -306,7 +306,7 @@ class DispositivosController {
                 }
 
 
-                client.publish(`dispositivos/${id}`, "true/ACESSO PERMITIDO")
+                client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
                 return res.status(200).json({
                     sucesso: true,
                     mensagem: "ACESSO PERMITIDO"

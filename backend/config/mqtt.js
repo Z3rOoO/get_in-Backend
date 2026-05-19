@@ -6,7 +6,7 @@ export const connectMQTT = () => {
 
     client.on("connect", () => {
         console.log("conectado ao broker")
-        client.subscribe(`dispositivos/res`)
+        client.subscribe(`get-in-3td/dispositivos/res`)
     })
 
     client.on("message", async (topic, message) => {
