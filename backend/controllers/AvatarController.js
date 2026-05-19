@@ -106,9 +106,11 @@ class AvatarController {
                 });
             }
 
-            // 📁 path correto (obrigatório pra policy funcionar)
+            // 📁 Gerar nome único com funcId, timestamp e número aleatório
             const fileExtension = req.file.originalname.split('.').pop();
-            const filePath = `${userId}/avatar.${fileExtension}`;
+            const timestamp = Date.now();
+            const randomNum = Math.floor(Math.random() * 1000000000);
+            const filePath = `${userId}/func-${funcId}-${timestamp}-${randomNum}.${fileExtension}`;
 
             // 🧹 deletar imagem antiga (se existir)
             if (funcionario.imagem) {
