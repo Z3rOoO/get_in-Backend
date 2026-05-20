@@ -207,6 +207,36 @@ view view_portaria_pendencias {
   solicitacao StatusRequisicao?
 }
 
+view view_portaria_checkout {
+  log_id            Int?
+  usuario_id        Int?
+  visitante_nome    String?   @db.VarChar(150)
+  visitante_cpf     String?   @db.VarChar(14)
+  tag_para_recolher String?   @db.VarChar(100)
+  tag_id            Int?
+  horario_entrada   DateTime?
+  empresa_visitada  String?   @db.VarChar(150)
+  setor_visitado    String?   @db.VarChar(100)
+}
+
+view view_public_stats {
+  visitas_hoje         BigInt?
+  setores_ativos       BigInt?
+  taxa_rastreabilidade Decimal? @db.Decimal
+}
+
+view view_portaria_checkin {
+  usuario_id             Int?
+  nome                   String? @db.VarChar(150)
+  cpf                    String? @db.VarChar(14)
+  email                  String? @db.VarChar(150)
+  empresa_nome           String? @db.VarChar
+  empresa_id             Int?
+  id_requisicao_pendente Int?
+  setor_destino_id       Int?
+  setor_destino_nome     String? @db.VarChar(100)
+}
+
 enum TipoFuncionario {
   func
   port
