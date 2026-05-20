@@ -185,13 +185,22 @@ view view_logs_detalhados {
 }
 
 view view_portaria_visitantes {
-  id      Int?
-  nome    String?   @db.VarChar(150)
-  empresa String?   @db.VarChar
-  entrada DateTime?
-  celular String?   @db.VarChar(20)
-  email   String?   @db.VarChar(150)
-  status  String?
+  id           Int?
+  nome         String?   @db.VarChar(150)
+  cpf          String?   @db.VarChar(14)
+  empresa      String?   @db.VarChar
+  setor        String?
+  idRequisicao Int?
+  motivo       String?   @db.VarChar(255)
+  descricao    String?
+  idLog        Int?
+  entrada      DateTime?
+  dataEntrada  DateTime?
+  dataSaida    DateTime?
+  celular      String?   @db.VarChar(20)
+  telefone     String?   @db.VarChar(20)
+  email        String?   @db.VarChar(150)
+  status       String?
 }
 
 view view_gestores {
@@ -200,11 +209,22 @@ view view_gestores {
 }
 
 view view_portaria_pendencias {
-  nome        String?           @db.VarChar(150)
-  empresas    String?           @db.VarChar
-  setores     String?           @db.VarChar(100)
-  motivo      String?           @db.VarChar(255)
-  solicitacao StatusRequisicao?
+  id               Int?
+  ids              Int[]
+  idUsuario        Int?
+  nome             String?           @db.VarChar(150)
+  cpf              String?           @db.VarChar(14)
+  empresa          String?           @db.VarChar
+  setor            String?
+  motivo           String?           @db.VarChar(255)
+  descricao        String?
+  solicitacao      StatusRequisicao?
+  status           StatusRequisicao?
+  dataDaRequisicao DateTime?
+  validade         DateTime?
+  celular          String?           @db.VarChar(20)
+  telefone         String?           @db.VarChar(20)
+  email            String?           @db.VarChar(150)
 }
 
 view view_portaria_checkout {

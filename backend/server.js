@@ -32,6 +32,7 @@ import PortariaRouter from "./router/PortariaRouter.js"
 import SetoresRouter from "./router/SetoresRouter.js"
 import VisitanteRouter from "./router/VisitanteRouter.js"
 import EmpresasRouter from "./router/EmpresaRouter.js"
+import PublicRouter from "./router/PublicRouter.js"
 
 // -------REGISTRO DAS ROTAS------- //
 
@@ -51,6 +52,7 @@ app.use('/avatar', AvatarRouter);
 app.use('/portaria', PortariaRouter)
 app.use('/setores', SetoresRouter)
 app.use('/empresas', EmpresasRouter)
+app.use('/public', PublicRouter)
 
 
 app.get("/health", (req, res) => {

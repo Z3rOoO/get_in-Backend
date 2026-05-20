@@ -23,10 +23,12 @@ class AuthController {
                 })
             }
 
-            // busca funcionario
             const func = await prisma.funcionario.findFirst({
                 where: {
                     idUsuario: user.id
+                },
+                include: {
+                    setores_funcionarios_idSetorTosetores: true
                 }
             })
 
@@ -54,11 +56,21 @@ class AuthController {
                 { expiresIn: process.env.JWT_EXPIRES_IN }
             )
 
+            const { senhaHash, ...funcionarioSeguro } = func
+            const funcionario = {
+                ...funcionarioSeguro,
+                setor: func.setores_funcionarios_idSetorTosetores || null,
+                setores: func.setores_funcionarios_idSetorTosetores || null
+            }
+
             return res.status(200).json({
                 token,
                 sucesso: true,
                 mensagem: "login bem-sucedido",
-                data: user
+                data: {
+                    usuario: user,
+                    funcionario
+                }
             })
 
         } catch (e) {

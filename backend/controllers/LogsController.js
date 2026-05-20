@@ -5,7 +5,7 @@ class LogsController {
 
     static async Read(req, res) {
         try {
-            const logs = await prisma.logDeAcesso.findMany();
+            const logs = await prisma.log.findMany();
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Logs lidas com sucesso",
@@ -31,7 +31,7 @@ class LogsController {
                 });
             }
 
-            const result = await prisma.logDeAcesso.create({
+            const result = await prisma.log.create({
                 data: {
                     idDispositivo: Number(idDispositivo),
                     idUsuario: Number(idUsuario),
@@ -59,7 +59,7 @@ class LogsController {
             const { id } = req.params;
             const { idDispositivo, idUsuario, dataDeEntrada, dataDeSaida } = req.body;
 
-            const result = await prisma.logDeAcesso.update({
+            const result = await prisma.log.update({
                 where: { id: Number(id) },
                 data: {
                     idDispositivo: idDispositivo ? Number(idDispositivo) : undefined,
@@ -87,7 +87,7 @@ class LogsController {
         try {
             const { id } = req.params;
 
-            await prisma.logDeAcesso.delete({
+            await prisma.log.delete({
                 where: { id: Number(id) }
             });
 
@@ -108,7 +108,7 @@ class LogsController {
         try {
             const { idUsuario } = req.params;
 
-            const logs = await prisma.logDeAcesso.findMany({
+            const logs = await prisma.log.findMany({
                 where: {
                     idUsuario: Number(idUsuario)
                 }
@@ -132,7 +132,7 @@ class LogsController {
         try {
             const { idDispositivo } = req.params;
 
-            const logs = await prisma.logDeAcesso.findMany({
+            const logs = await prisma.log.findMany({
                 where: {
                     idDispositivo: Number(idDispositivo)
                 }
@@ -156,7 +156,7 @@ class LogsController {
         try {
             const { id } = req.params;
 
-            const log = await prisma.logDeAcesso.findUnique({
+            const log = await prisma.log.findUnique({
                 where: { id: Number(id) }
             });
 

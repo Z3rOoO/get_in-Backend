@@ -1,131 +1,241 @@
-// import { Create, Read, Update, Delete } from "../config/database.js";
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
+
+function parseId(value) {
+    const id = Number(value);
+    return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function buildTagData(body = {}) {
+    const data = {};
+    const idUsuario = parseId(body.idUsuario);
+
+    if (body.idUsuario !== undefined) data.idUsuario = idUsuario;
+    if (body.status !== undefined) data.status = body.status || null;
+    if (body.codigoTag !== undefined) data.codigoTag = String(body.codigoTag || "").trim();
+    if (body.temporario !== undefined) data.temporario = Boolean(body.temporario);
+    if (body.validade !== undefined) data.validade = body.validade ? new Date(body.validade) : null;
+
+    return data;
+}
 
 class TagsController {
     static async Read(req, res) {
         try {
-            const tags = await prisma.tag.findMany() //le as tags da tabela "tags"
+            const tags = await prisma.tag.findMany({
+                orderBy: [
+                    { dataDeCriacao: "desc" },
+                    { id: "desc" }
+                ]
+            });
+
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Tags lidas com sucesso",
                 data: tags
-            })
+            });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao ler as tags",
                 erro: e.message
-            })
+            });
         }
     }
 
-    static async Create(req, res) {
+    static async ReadLatest(req, res) {
         try {
-            const { idUsuario, idCracha, codigoTag, temporario, validade } = req.body
+            const tag = await prisma.tag.findFirst({
+                where: { idUsuario: null },
+                orderBy: [
+                    { dataDeCriacao: "desc" },
+                    { id: "desc" }
+                ]
+            }) || await prisma.tag.findFirst({
+                orderBy: [
+                    { dataDeCriacao: "desc" },
+                    { id: "desc" }
+                ]
+            });
 
-            const newTag = {
-                idUsuario,
-                idCracha,
-                codigoTag,
-                temporario,
-                validade
-            }
-
-            const result = await prisma.tag.create({
-                data: newTag
-            }) // cria uma nova tag na tabela "tags"
-            return res.status(201).json({
-                sucesso: true,
-                mensagem: "Tag criado com sucesso",
-                data: result
-            })
-
-        } catch (e) {
-            return res.status(500).json({
-                sucesso: false,
-                mensagem: "Erro ao criar a tag",
-                erro: e.message
-            })
-        }
-    }
-
-    static async Update(req, res) {
-        try {
-            const { id } = req.params
-            const { idUsuario, idCracha, codigoTag, temporario, validade } = req.body
-
-            const updatedTag = {
-                idUsuario,
-                idCracha,
-                codigoTag,
-                temporario,
-                validade
-            }
-
-            const result = await prisma.tag.update({
-                where: {
-                    id: Number(id)
-                },
-                data: updatedTag
-            }) // atualiza a tag com o id fornecido usando os dados fornecidos
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Tag atualizado com sucesso",
-                data: result
-            })
+                mensagem: "Ultima tag lida com sucesso",
+                data: tag
+            });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao atualizar a tag",
+                mensagem: "Erro ao ler a ultima tag",
                 erro: e.message
-            })
+            });
         }
     }
 
-    static async Delete(req, res) {
+    static async ReadByCode(req, res) {
         try {
-            const { id } = req.params //pega o id da tag a ser deletada 
-
-            await prisma.tag.delete({
-                where: {
-                    id: Number(id)
-                }
-            }) //deleta a tag com o id fornecido
-            return res.status(200).json({
-                sucesso: true,
-                mensagem: "Tag deletado com sucesso",
-            })
-        } catch (e) {
-            return res.status(500).json({
-                sucesso: false,
-                mensagem: "Erro ao deletar a tag",
-                erro: e.message
-            })
-        }
-    }
-
-    static async ReadById(req, res) {
-        try {
-            const { id } = req.params //pega o id da tag a ser lida
-
+            const { codigoTag } = req.params;
             const tag = await prisma.tag.findUnique({
-                where: {
-                    id: Number(id)
-                }
-            }) //le a tag com o id fornecido
+                where: { codigoTag }
+            });
+
+            if (!tag) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "Tag nao encontrada"
+                });
+            }
+
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Tag lida com sucesso",
-                data: tag 
-            })
+                data: tag
+            });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao ler a tag",
                 erro: e.message
-            })
+            });
+        }
+    }
+
+    static async Create(req, res) {
+        try {
+            const data = buildTagData(req.body);
+
+            if (!data.codigoTag) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "codigoTag e obrigatorio"
+                });
+            }
+
+            const result = await prisma.tag.create({ data });
+
+            return res.status(201).json({
+                sucesso: true,
+                mensagem: "Tag criada com sucesso",
+                data: result
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao criar a tag",
+                erro: e.message
+            });
+        }
+    }
+
+    static async Update(req, res) {
+        try {
+            const { id } = req.params;
+            const data = buildTagData(req.body);
+
+            const result = await prisma.tag.update({
+                where: {
+                    id: Number(id)
+                },
+                data
+            });
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Tag atualizada com sucesso",
+                data: result
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao atualizar a tag",
+                erro: e.message
+            });
+        }
+    }
+
+    static async AssignByCode(req, res) {
+        try {
+            const { codigoTag } = req.params;
+            const idUsuario = parseId(req.body?.idUsuario);
+
+            if (!idUsuario) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "idUsuario e obrigatorio"
+                });
+            }
+
+            const result = await prisma.tag.update({
+                where: { codigoTag },
+                data: { idUsuario }
+            });
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Tag vinculada com sucesso",
+                data: result
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao vincular a tag",
+                erro: e.message
+            });
+        }
+    }
+
+    static async Delete(req, res) {
+        try {
+            const { id } = req.params;
+
+            await prisma.tag.delete({
+                where: {
+                    id: Number(id)
+                }
+            });
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Tag deletada com sucesso"
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao deletar a tag",
+                erro: e.message
+            });
+        }
+    }
+
+    static async ReadById(req, res) {
+        try {
+            const { id } = req.params;
+
+            const tag = await prisma.tag.findUnique({
+                where: {
+                    id: Number(id)
+                }
+            });
+
+            if (!tag) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "Tag nao encontrada"
+                });
+            }
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Tag lida com sucesso",
+                data: tag
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao ler a tag",
+                erro: e.message
+            });
         }
     }
 }
 
-export default TagsController
+export default TagsController;
