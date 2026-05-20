@@ -1,89 +1,85 @@
-// import { Create, Update, Delete, Read } from "../config/database.js";
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
+
+function parseId(value) {
+    const id = Number(value);
+    return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function normalizeSetorIds(idSetor) {
+    const ids = Array.isArray(idSetor) ? idSetor : [idSetor];
+
+    return Array.from(
+        new Set(ids.map(parseId).filter(Boolean))
+    );
+}
+
+function normalizeStatus(status) {
+    const value = String(status || "").trim().toLowerCase();
+    const validStatuses = ["pendente", "aprovado", "recusado"];
+
+    return validStatuses.includes(value) ? value : null;
+}
 
 class RequisicaoVisitanteController {
     static async Create(req, res) {
         try {
             const { idUsuario, idSetor, motivo, validade, descricao, empresa } = req.body;
-            let setores = []
-            let limpar = []
+            const usuarioId = parseId(idUsuario);
+            const setorIds = normalizeSetorIds(idSetor);
 
-            if (!idUsuario || !idSetor) {
+            if (!usuarioId || setorIds.length === 0) {
                 return res.status(400).json({
                     sucesso: false,
-                    mensagem: "idUsuario e idSetor são obrigatórios"
+                    mensagem: "idUsuario e ao menos um idSetor sao obrigatorios"
                 });
             }
 
-            while (idSetor[0] != null) {
+            const setoresEncontrados = await prisma.setores.findMany({
+                where: {
+                    id: { in: setorIds }
+                },
+                select: { id: true }
+            });
 
+            const setoresValidos = new Set(setoresEncontrados.map((setor) => setor.id));
+            const setorInvalido = setorIds.find((id) => !setoresValidos.has(id));
 
-                const setorEncontrado = await prisma.setores.findFirst({
-                    where: {
-                        id: idSetor[0]
-                    }
-                })
-
-                if (setorEncontrado) {
-                    if (idSetor.length == 1) {
-                        setores = setores + idSetor.shift()
-                        setores = await setores.split(",")
-                        console.log(setores)
-                    } else {
-                        setores = setores + `${idSetor.shift()},`
-                    }
-                } else {
-                    return res.status(400).json({
-                        sucesso: false,
-                        erro: "não foi encontrado o setor " + idSetor[0]
-                    })
-                }
-            }
-
-            while (setores[0] != null) {
-                console.log(setores[0])
-                const resultado = await prisma.requisicaoDeVisita.create({
-                    data: {
-                        idUsuario: Number(idUsuario),
-                        idSetor: Number(setores[0]),
-                        motivo: motivo || null,
-                        validade: validade ? new Date(validade) : null,
-                        descricao: descricao || null,
-                        empresa: empresa || null,
-                        status: "pendente"
-                    }
+            if (setorInvalido) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: `Setor ${setorInvalido} nao encontrado`
                 });
-
-                if (resultado) {
-                    if (setores.length == 1) {
-                        limpar = await setores.shift()
-                        limpar = []
-                        console.log("limpando os setores restantes: " + limpar)
-
-                    } else {
-                        console.log("excluindo setor: " + setores[0])
-                        limpar = await limpar + setores.shift()
-                    }
-                } else {
-                    return res.status(500).json({
-                        sucesso: false,
-                        erro: "erro ao criar requisicao de visitante do id setor: " + setores[0]
-                    })
-                }
-
-
             }
+
+            const requisicoes = await prisma.$transaction(
+                setorIds.map((setorId) =>
+                    prisma.requisicaoDeVisita.create({
+                        data: {
+                            idUsuario: usuarioId,
+                            idSetor: setorId,
+                            motivo: motivo || null,
+                            validade: validade ? new Date(validade) : null,
+                            descricao: descricao || null,
+                            empresa: empresa || null,
+                            status: "pendente"
+                        },
+                        include: {
+                            usuario: true,
+                            setores: true
+                        }
+                    })
+                )
+            );
 
             return res.status(201).json({
                 sucesso: true,
-                mensagem: "Requisição de visitante criada com sucesso"
+                mensagem: "Requisicao de visitante criada com sucesso",
+                data: requisicoes
             });
-
-            
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao criar requisição de visitante",
+                mensagem: "Erro ao criar requisicao de visitante",
                 erro: e.message
             });
         }
@@ -93,20 +89,26 @@ class RequisicaoVisitanteController {
         try {
             const resultado = await prisma.requisicaoDeVisita.findMany({
                 include: {
-                    usuario: true,
+                    usuario: {
+                        include: { empresas: true }
+                    },
                     setores: true
-                }
+                },
+                orderBy: [
+                    { dataDaRequisicao: "desc" },
+                    { id: "desc" }
+                ]
             });
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Requisições de visitantes listadas com sucesso",
+                mensagem: "Requisicoes de visitantes listadas com sucesso",
                 data: resultado
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao listar requisições de visitantes",
+                mensagem: "Erro ao listar requisicoes de visitantes",
                 erro: e.message
             });
         }
@@ -119,7 +121,9 @@ class RequisicaoVisitanteController {
             const resultado = await prisma.requisicaoDeVisita.findUnique({
                 where: { id: Number(id) },
                 include: {
-                    usuario: true,
+                    usuario: {
+                        include: { empresas: true }
+                    },
                     setores: true
                 }
             });
@@ -127,19 +131,19 @@ class RequisicaoVisitanteController {
             if (!resultado) {
                 return res.status(404).json({
                     sucesso: false,
-                    mensagem: "Requisição não encontrada"
+                    mensagem: "Requisicao nao encontrada"
                 });
             }
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Requisição encontrada com sucesso",
+                mensagem: "Requisicao encontrada com sucesso",
                 data: resultado
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao buscar requisição",
+                mensagem: "Erro ao buscar requisicao",
                 erro: e.message
             });
         }
@@ -149,27 +153,78 @@ class RequisicaoVisitanteController {
         try {
             const { id } = req.params;
             const { status, motivo, validade, descricao, empresa } = req.body;
+            const data = {};
+            const normalizedStatus = normalizeStatus(status);
+
+            if (normalizedStatus) data.status = normalizedStatus;
+            if (motivo !== undefined) data.motivo = motivo || null;
+            if (validade !== undefined) data.validade = validade ? new Date(validade) : null;
+            if (descricao !== undefined) data.descricao = descricao || null;
+            if (empresa !== undefined) data.empresa = empresa || null;
 
             const resultado = await prisma.requisicaoDeVisita.update({
                 where: { id: Number(id) },
-                data: {
-                    status: status || undefined,
-                    motivo: motivo || undefined,
-                    validade: validade ? new Date(validade) : undefined,
-                    descricao: descricao || undefined,
-                    empresa: empresa || undefined
+                data,
+                include: {
+                    usuario: true,
+                    setores: true
                 }
             });
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Requisição atualizada com sucesso",
+                mensagem: "Requisicao atualizada com sucesso",
                 data: resultado
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao atualizar requisição",
+                mensagem: "Erro ao atualizar requisicao",
+                erro: e.message
+            });
+        }
+    }
+
+    static async BulkUpdate(req, res) {
+        try {
+            const updates = Array.isArray(req.body?.updates) ? req.body.updates : [];
+
+            if (updates.length === 0) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "Nenhuma atualizacao enviada"
+                });
+            }
+
+            const result = await prisma.$transaction(
+                updates.map((item) => {
+                    const id = parseId(item.id);
+                    const status = normalizeStatus(item.status);
+
+                    if (!id || !status) {
+                        throw new Error("Atualizacao invalida. Informe id e status validos.");
+                    }
+
+                    return prisma.requisicaoDeVisita.update({
+                        where: { id },
+                        data: { status },
+                        include: {
+                            usuario: true,
+                            setores: true
+                        }
+                    });
+                })
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Requisicoes atualizadas com sucesso",
+                data: result
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao atualizar requisicoes",
                 erro: e.message
             });
         }
@@ -185,13 +240,13 @@ class RequisicaoVisitanteController {
 
             return res.status(200).json({
                 sucesso: true,
-                mensagem: "Requisição deletada com sucesso",
+                mensagem: "Requisicao deletada com sucesso",
                 data: resultado
             });
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao deletar requisição",
+                mensagem: "Erro ao deletar requisicao",
                 erro: e.message
             });
         }

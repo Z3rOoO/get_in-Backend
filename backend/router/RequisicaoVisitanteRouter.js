@@ -5,6 +5,7 @@ import RequisicaoVisitanteController from '../controllers/RequisicaoVisitanteCon
 const router = express.Router();
 
 router.get('/', Auth, RequisicaoVisitanteController.Read);
+router.put('/lote', Auth, RequisicaoVisitanteController.BulkUpdate);
 router.get('/:id', Auth, RequisicaoVisitanteController.ReadById);
 router.post('/', Auth, RequisicaoVisitanteController.Create);
 router.put('/:id', Auth, RequisicaoVisitanteController.Update);
