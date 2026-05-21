@@ -188,10 +188,10 @@ view view_portaria_visitantes {
   id           Int?
   nome         String?   @db.VarChar(150)
   cpf          String?   @db.VarChar(14)
-  empresa      String?   @db.VarChar
+  empresa      String?
   setor        String?
   idRequisicao Int?
-  motivo       String?   @db.VarChar(255)
+  motivo       String?
   descricao    String?
   idLog        Int?
   entrada      DateTime?
@@ -214,14 +214,14 @@ view view_portaria_pendencias {
   idUsuario        Int?
   nome             String?           @db.VarChar(150)
   cpf              String?           @db.VarChar(14)
-  empresa          String?           @db.VarChar
+  empresa          String?
   setor            String?
-  motivo           String?           @db.VarChar(255)
+  motivo           String?
   descricao        String?
   solicitacao      StatusRequisicao?
   status           StatusRequisicao?
-  dataDaRequisicao DateTime?
-  validade         DateTime?
+  dataDaRequisicao DateTime?         @db.Timestamp(6)
+  validade         DateTime?         @db.Timestamp(6)
   celular          String?           @db.VarChar(20)
   telefone         String?           @db.VarChar(20)
   email            String?           @db.VarChar(150)

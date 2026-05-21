@@ -23,8 +23,8 @@ import CrachaRouter from './router/CrachaRouter.js';
 import DepRouter from './router/DepRouter.js';
 import TagsRouter from './router/TagsRouter.js';
 import RequisicaoFuncRouter from './router/RequisicaoFuncRouter.js';
-import DispositivosRouter from './router/DispositivosRouter.js';
 import LogsRouter from './router/LogsRouter.js';
+import DispositivosRouter from './router/DispositivosRouter.js';
 import RequisicaoVisitanteRouter from './router/RequisicaoVisitanteRouter.js';
 import ViewRouter from './router/ViewRouter.js';
 import AvatarRouter from './router/AvatarRouter.js';
@@ -39,13 +39,13 @@ import PublicRouter from "./router/PublicRouter.js"
 app.use("/user", UserRouter)
 app.use('/auth', AuthRouter);
 app.use('/func', FuncRouter);
+app.use('/dispositivos', DispositivosRouter);
 app.use('/dep', DepRouter);
 app.use('/cracha', CrachaRouter);
 app.use('/tags', TagsRouter);
 app.use('/requisicao', RequisicaoFuncRouter);
 app.use('/requisicao-visitante', RequisicaoVisitanteRouter);
 app.use('/visitante', VisitanteRouter)
-app.use('/dispositivos', DispositivosRouter);
 app.use('/logs', LogsRouter);
 app.use('/views', ViewRouter);
 app.use('/avatar', AvatarRouter);
