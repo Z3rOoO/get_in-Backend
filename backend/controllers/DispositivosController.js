@@ -222,6 +222,9 @@ class DispositivosController {
 
 
                 if (!tag) { // CRACHA NÃO CADASTRADO NO SISTEMA 
+
+                      client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO NO SISTEMA")
+
                     return res.status(404).json({
                         sucesso: false,
                         mensagem: "CRACHA NÃO CADASTRADO NO SISTEMA"
