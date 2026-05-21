@@ -46,16 +46,32 @@ class ViewController {
     static async getUsuariosDetalhados(req, res) {
         try {
             const rawData = await prisma.view_perfil_completo_usuario.findMany();
-            
-            // Converter paths em URLs públicas
             const data = rawData.map(item => ({
                 ...item,
                 foto_perfil: item.foto_perfil ? `${url}/${item.foto_perfil}` : null
             }));
-
             return res.status(200).json({ sucesso: true, data });
         } catch (e) {
             return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar usuários detalhados", erro: e.message });
+        }
+    }
+
+    static async getUsuarioDetalhadoPorId(req, res) {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ sucesso: false, mensagem: "ID do usuário é obrigatório" });
+            }
+            const usuario = await prisma.view_perfil_completo_usuario.findFirst({
+                where: { usuario_id: Number(id) }
+            });
+            if (!usuario) {
+                return res.status(404).json({ sucesso: false, mensagem: "Usuário não encontrado" });
+            }
+            usuario.foto_perfil = usuario.foto_perfil ? `${url}/${usuario.foto_perfil}` : null;
+            return res.status(200).json({ sucesso: true, data: usuario });
+        } catch (e) {
+            return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar usuário detalhado", erro: e.message });
         }
     }
 
