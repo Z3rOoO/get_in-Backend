@@ -133,7 +133,7 @@ class PortariaController {
                     u.celular AS telefone,
                     u.email,
                     CASE
-                        WHEN ul."dataDeEntrada" IS NULL THEN 'Liberado'
+                        WHEN ul."dataDeEntrada" IS NULL THEN 'Dentro'
                         WHEN ul."dataDeSaida" IS NULL THEN 'Dentro'
                         ELSE 'Saida'
                     END AS status

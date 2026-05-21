@@ -196,8 +196,10 @@ class RequisicaoVisitanteController {
                 });
             }
 
-            const result = await prisma.$transaction(
-                updates.map((item) => {
+            const result = await prisma.$transaction(async (tx) => {
+                const requisicoesAtualizadas = [];
+
+                for (const item of updates) {
                     const id = parseId(item.id);
                     const status = normalizeStatus(item.status);
 
@@ -205,7 +207,7 @@ class RequisicaoVisitanteController {
                         throw new Error("Atualizacao invalida. Informe id e status validos.");
                     }
 
-                    return prisma.requisicaoDeVisita.update({
+                    const requisicao = await tx.requisicaoDeVisita.update({
                         where: { id },
                         data: { status },
                         include: {
@@ -213,8 +215,40 @@ class RequisicaoVisitanteController {
                             setores: true
                         }
                     });
-                })
-            );
+
+                    requisicoesAtualizadas.push(requisicao);
+
+                    if (status === "aprovado") {
+                        const logAtivo = await tx.log.findFirst({
+                            where: {
+                                idUsuario: requisicao.idUsuario,
+                                dataDeEntrada: { not: null },
+                                dataDeSaida: null
+                            }
+                        });
+
+                        if (!logAtivo) {
+                            const dispositivo = await tx.dispositivo.findFirst({
+                                where: { idSetor: requisicao.idSetor },
+                                orderBy: { id: "asc" }
+                            });
+
+                            if (dispositivo) {
+                                await tx.log.create({
+                                    data: {
+                                        idDispositivo: dispositivo.id,
+                                        idUsuario: requisicao.idUsuario,
+                                        dataDeEntrada: new Date(),
+                                        dataDeSaida: null
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return requisicoesAtualizadas;
+            });
 
             return res.status(200).json({
                 sucesso: true,
