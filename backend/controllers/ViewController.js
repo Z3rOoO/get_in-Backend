@@ -8,7 +8,7 @@ class ViewController {
     /**
      * Utilitário para gerar URL pública a partir do path salvo no banco
      */
-  
+
     static async getRequisicoesConsolidadas(req, res) {
         try {
             const data = await prisma.view_central_requisicoes.findMany();
@@ -74,6 +74,7 @@ class ViewController {
             return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar usuário detalhado", erro: e.message });
         }
     }
+  
 
     static async getTagsDetalhadas(req, res) {
         try {
@@ -100,7 +101,7 @@ class ViewController {
         }
     }
 
-    static async getGestores(req, res){
+    static async getGestores(req, res) {
 
         const gestores = await prisma.view_gestores.findMany()
 

@@ -19,6 +19,29 @@ class FuncController {
         }
     }
 
+    static async ReadView(req, res) {
+        try {
+            const func = await prisma.view_perfil_completo_usuario.findMany({
+                where: {
+                    tipo: { not: null
+                        
+                    }
+                }
+            }) // le os funcionaruos da tabela "funcionarios" incluindo os dados relacionados das tabelas "usuarios" e "setores"
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Funcionarios lidos com sucesso",
+                data: func
+            })
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao ler os funcionarios",
+                erro: e.message
+            })
+        }
+    }
+
     static async ReadId(req, res) {
         try {
             const { id } = req.params;
