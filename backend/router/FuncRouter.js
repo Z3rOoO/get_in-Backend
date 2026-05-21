@@ -5,6 +5,7 @@ import Auth from '../middleware/AuthMiddleware.js';
 import FuncController from '../controllers/FuncController.js';
 
 router.get('/', Auth, FuncController.Read);
+router.get('/view', Auth, FuncController.ReadView);
 router.get('/:id', Auth, FuncController.ReadId);
 router.get('/name/:nome', Auth, FuncController.ReadName);
 router.get('/cpf/:cpf', Auth, FuncController.ReadCpf);
