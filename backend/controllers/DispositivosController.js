@@ -230,7 +230,7 @@ class DispositivosController {
 
                 if (tag.idUsuario == null) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que não existe usuario vinculado ao cracha
 
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/NENHUM USUARIO VINCULADO AO CRACHA")
 
                     return res.status(404).json({
                         sucesso: false,
