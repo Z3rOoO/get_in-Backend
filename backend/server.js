@@ -24,6 +24,7 @@ import DepRouter from './router/DepRouter.js';
 import TagsRouter from './router/TagsRouter.js';
 import RequisicaoFuncRouter from './router/RequisicaoFuncRouter.js';
 import LogsRouter from './router/LogsRouter.js';
+import DispositivosRouter from './router/DispositivosRouter.js';
 import RequisicaoVisitanteRouter from './router/RequisicaoVisitanteRouter.js';
 import ViewRouter from './router/ViewRouter.js';
 import AvatarRouter from './router/AvatarRouter.js';
@@ -38,6 +39,7 @@ import PublicRouter from "./router/PublicRouter.js"
 app.use("/user", UserRouter)
 app.use('/auth', AuthRouter);
 app.use('/func', FuncRouter);
+app.use('/dispositivos', DispositivosRouter);
 app.use('/dep', DepRouter);
 app.use('/cracha', CrachaRouter);
 app.use('/tags', TagsRouter);
