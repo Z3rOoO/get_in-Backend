@@ -7,6 +7,7 @@ const router = express.Router();
 router.get("/requisicoes", AuthMiddleware, ViewController.getRequisicoesConsolidadas);
 router.get("/logs", AuthMiddleware, ViewController.getLogsDetalhados);
 router.get("/usuarios", AuthMiddleware, ViewController.getUsuariosDetalhados);
+router.get("/usuarios/:id", AuthMiddleware, ViewController.getUsuarioDetalhadoPorId);
 router.get("/tags", AuthMiddleware, ViewController.getTagsDetalhadas);
 router.get("/gestores", AuthMiddleware, ViewController.getGestores);
 
