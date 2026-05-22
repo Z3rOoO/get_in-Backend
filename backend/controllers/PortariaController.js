@@ -13,6 +13,51 @@ function parseId(value) {
     return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function getTodayRange() {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return { start, end };
+}
+
+function normalizeDescricaoLabel(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+function upsertDescricaoField(descricao, label, value, aliases = []) {
+    const cleanValue = hasValue(value) ? cleanString(value) : "Nao informado";
+    const labels = new Set([label, ...aliases].map(normalizeDescricaoLabel));
+    const parts = String(descricao || "")
+        .split("|")
+        .map((part) => part.trim())
+        .filter(Boolean);
+    let replaced = false;
+
+    const nextParts = parts.map((part) => {
+        const [rawLabel] = part.split(":");
+
+        if (labels.has(normalizeDescricaoLabel(rawLabel))) {
+            replaced = true;
+            return `${label}: ${cleanValue}`;
+        }
+
+        return part;
+    });
+
+    if (!replaced) {
+        nextParts.push(`${label}: ${cleanValue}`);
+    }
+
+    return nextParts.join(" | ");
+}
+
 async function findVisitante(id) {
     return prisma.usuario.findUnique({
         where: { id },
@@ -88,8 +133,9 @@ function getPrismaErrorMessage(error) {
 class PortariaController {
     static async readVisitanteLocal(req, res) {
         try {
+            const { start, end } = getTodayRange();
             const visitantes = await prisma.$queryRaw`
-                WITH requisicoes_aprovadas AS (
+                WITH requisicoes_visitantes AS (
                     SELECT
                         rv."idUsuario",
                         MAX(rv.id) AS "idRequisicao",
@@ -97,12 +143,19 @@ class PortariaController {
                         STRING_AGG(DISTINCT rv.descricao, ' | ') FILTER (WHERE rv.descricao IS NOT NULL) AS descricao,
                         COALESCE(MAX(rv.empresa), MAX(e.nome)) AS empresa,
                         STRING_AGG(DISTINCT s.nome, ', ' ORDER BY s.nome) AS setor,
-                        MAX(rv."dataDaRequisicao") AS "dataDaRequisicao"
+                        MAX(rv."dataDaRequisicao") AS "dataDaRequisicao",
+                        CASE
+                            WHEN BOOL_OR(rv.status = 'pendente') THEN 'pendente'
+                            WHEN BOOL_OR(rv.status = 'aprovado') THEN 'aprovado'
+                            ELSE 'recusado'
+                        END AS "statusRequisicao"
                     FROM requisicoes_de_visitas rv
                     LEFT JOIN setores s ON s.id = rv."idSetor"
                     LEFT JOIN usuarios u ON u.id = rv."idUsuario"
                     LEFT JOIN empresas e ON e.id = u."idEmpresa"
-                    WHERE rv.status = 'aprovado'
+                    WHERE rv.status IN ('pendente', 'aprovado')
+                        AND rv."dataDaRequisicao" >= ${start}
+                        AND rv."dataDaRequisicao" < ${end}
                     GROUP BY rv."idUsuario"
                 ),
                 ultimos_logs AS (
@@ -118,13 +171,14 @@ class PortariaController {
                 )
                 SELECT
                     u.id,
+                    u.id AS "idUsuario",
                     u.nome,
                     u.cpf,
-                    COALESCE(ra.empresa, e.nome) AS empresa,
-                    ra.setor,
-                    ra."idRequisicao",
-                    ra.motivo,
-                    ra.descricao,
+                    COALESCE(rv.empresa, e.nome) AS empresa,
+                    rv.setor,
+                    rv."idRequisicao",
+                    rv.motivo,
+                    rv.descricao,
                     ul.id AS "idLog",
                     ul."dataDeEntrada" AS entrada,
                     ul."dataDeEntrada" AS "dataEntrada",
@@ -132,20 +186,26 @@ class PortariaController {
                     u.celular,
                     u.celular AS telefone,
                     u.email,
+                    rv."dataDaRequisicao",
                     CASE
-                        WHEN ul."dataDeEntrada" IS NULL THEN 'Dentro'
-                        WHEN ul."dataDeSaida" IS NULL THEN 'Dentro'
-                        ELSE 'Saida'
-                    END AS status
-                FROM requisicoes_aprovadas ra
-                JOIN usuarios u ON u.id = ra."idUsuario"
+                        WHEN ul."dataDeEntrada" IS NOT NULL AND ul."dataDeSaida" IS NULL THEN 'dentro'
+                        WHEN ul."dataDeSaida" IS NOT NULL THEN 'saida'
+                        WHEN rv."statusRequisicao" = 'aprovado' THEN 'dentro'
+                        ELSE rv."statusRequisicao"
+                    END AS status,
+                    CASE
+                        WHEN ul."dataDeSaida" IS NULL AND rv."statusRequisicao" = 'aprovado' THEN true
+                        ELSE false
+                    END AS "podeCheckout"
+                FROM requisicoes_visitantes rv
+                JOIN usuarios u ON u.id = rv."idUsuario"
                 LEFT JOIN funcionarios f ON u.id = f."idUsuario"
                 LEFT JOIN empresas e ON u."idEmpresa" = e.id
                 LEFT JOIN ultimos_logs ul ON ul."idUsuario" = u.id AND ul.ordem = 1
                 WHERE f."idUsuario" IS NULL
                 ORDER BY
-                    COALESCE(ul."dataDeSaida", ul."dataDeEntrada", ra."dataDaRequisicao") DESC NULLS LAST,
-                    ra."idRequisicao" DESC
+                    COALESCE(ul."dataDeSaida", ul."dataDeEntrada", rv."dataDaRequisicao") DESC NULLS LAST,
+                    rv."idRequisicao" DESC
             `;
 
             return res.status(200).json({
@@ -164,8 +224,15 @@ class PortariaController {
 
     static async readPendencias(req, res) {
         try {
+            const { start, end } = getTodayRange();
             const requisicoes = await prisma.requisicaoDeVisita.findMany({
-                where: { status: "pendente" },
+                where: {
+                    status: "pendente",
+                    dataDaRequisicao: {
+                        gte: start,
+                        lt: end
+                    }
+                },
                 include: {
                     usuario: {
                         include: { empresas: true }
@@ -253,6 +320,92 @@ class PortariaController {
         }
     }
 
+    static async readHistorico(req, res) {
+        try {
+            const registros = await prisma.$queryRaw`
+                WITH requisicoes_visitantes AS (
+                    SELECT
+                        rv."idUsuario",
+                        MAX(rv.id) AS "idRequisicao",
+                        MAX(rv.motivo) AS motivo,
+                        STRING_AGG(DISTINCT rv.descricao, ' | ') FILTER (WHERE rv.descricao IS NOT NULL) AS descricao,
+                        COALESCE(MAX(rv.empresa), MAX(e.nome)) AS empresa,
+                        STRING_AGG(DISTINCT s.nome, ', ' ORDER BY s.nome) AS "setoresPermitidos",
+                        MAX(rv."dataDaRequisicao") AS "dataDaRequisicao",
+                        CASE
+                            WHEN BOOL_OR(rv.status = 'pendente') THEN 'pendente'
+                            WHEN BOOL_OR(rv.status = 'aprovado') THEN 'aprovado'
+                            WHEN BOOL_OR(rv.status = 'recusado') THEN 'recusado'
+                            ELSE 'pendente'
+                        END AS "statusRequisicao"
+                    FROM requisicoes_de_visitas rv
+                    LEFT JOIN setores s ON s.id = rv."idSetor"
+                    LEFT JOIN usuarios u ON u.id = rv."idUsuario"
+                    LEFT JOIN empresas e ON e.id = u."idEmpresa"
+                    GROUP BY rv."idUsuario"
+                ),
+                ultimos_logs AS (
+                    SELECT
+                        l.*,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY l."idUsuario"
+                            ORDER BY
+                                COALESCE(l."dataDeSaida", l."dataDeEntrada") DESC NULLS LAST,
+                                l.id DESC
+                        ) AS ordem
+                    FROM logs l
+                )
+                SELECT
+                    u.id,
+                    u.id AS "idUsuario",
+                    u.nome,
+                    u.cpf,
+                    COALESCE(rv.empresa, e.nome) AS empresa,
+                    rv."setoresPermitidos" AS setor,
+                    rv."setoresPermitidos",
+                    rv."idRequisicao",
+                    rv.motivo,
+                    rv.descricao,
+                    ul.id AS "idLog",
+                    ul."dataDeEntrada" AS entrada,
+                    ul."dataDeEntrada" AS "dataEntrada",
+                    ul."dataDeSaida" AS "dataSaida",
+                    u.celular,
+                    u.celular AS telefone,
+                    u.email,
+                    rv."dataDaRequisicao",
+                    CASE
+                        WHEN ul."dataDeEntrada" IS NOT NULL AND ul."dataDeSaida" IS NULL THEN 'dentro'
+                        WHEN ul."dataDeSaida" IS NOT NULL THEN 'saida'
+                        WHEN rv."statusRequisicao" = 'aprovado' THEN 'dentro'
+                        ELSE rv."statusRequisicao"
+                    END AS status
+                FROM requisicoes_visitantes rv
+                JOIN usuarios u ON u.id = rv."idUsuario"
+                LEFT JOIN empresas e ON u."idEmpresa" = e.id
+                LEFT JOIN ultimos_logs ul ON ul."idUsuario" = u.id AND ul.ordem = 1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM funcionarios f WHERE f."idUsuario" = u.id
+                )
+                ORDER BY
+                    COALESCE(ul."dataDeSaida", ul."dataDeEntrada", rv."dataDaRequisicao") DESC NULLS LAST,
+                    rv."idRequisicao" DESC
+            `;
+
+            return res.status(200).json({
+                sucesso: true,
+                dados: registros,
+                data: registros
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro interno no servidor",
+                erro: e.message
+            });
+        }
+    }
+
     static async checkout(req, res) {
         try {
             const idLog = parseId(req.body?.idLog);
@@ -282,9 +435,46 @@ class PortariaController {
             }
 
             if (!log) {
-                return res.status(404).json({
-                    sucesso: false,
-                    mensagem: "Nenhuma entrada ativa encontrada para check-out"
+                const requisicao = idUsuario
+                    ? await prisma.requisicaoDeVisita.findFirst({
+                        where: {
+                            idUsuario,
+                            status: "aprovado"
+                        },
+                        orderBy: [
+                            { dataDaRequisicao: "desc" },
+                            { id: "desc" }
+                        ]
+                    })
+                    : null;
+
+                const dispositivo = requisicao
+                    ? await prisma.dispositivo.findFirst({
+                        where: { idSetor: requisicao.idSetor },
+                        orderBy: { id: "asc" }
+                    })
+                    : await prisma.dispositivo.findFirst({ orderBy: { id: "asc" } });
+
+                if (!requisicao || !dispositivo) {
+                    return res.status(404).json({
+                        sucesso: false,
+                        mensagem: "Nenhuma entrada ativa encontrada para check-out"
+                    });
+                }
+
+                const resultado = await prisma.log.create({
+                    data: {
+                        idDispositivo: dispositivo.id,
+                        idUsuario,
+                        dataDeEntrada: requisicao.dataDaRequisicao || dataSaida,
+                        dataDeSaida: dataSaida
+                    }
+                });
+
+                return res.status(200).json({
+                    sucesso: true,
+                    mensagem: "Check-out realizado com sucesso",
+                    data: resultado
                 });
             }
 
@@ -336,6 +526,9 @@ class PortariaController {
                 email,
                 empresa,
                 setor,
+                setorResponsavel,
+                areaResponsavel,
+                setorPermitido,
                 idSetor,
                 motivo,
                 validade,
@@ -345,6 +538,7 @@ class PortariaController {
             const userData = {};
             const reqData = {};
             const empresaNome = hasValue(empresa) ? cleanString(empresa) : "";
+            const responsavel = setorResponsavel || areaResponsavel || setor;
 
             if (hasValue(nome)) userData.nome = cleanString(nome);
             if (hasValue(cpf)) userData.cpf = cleanString(cpf);
@@ -356,7 +550,7 @@ class PortariaController {
             const empresaId = await resolveEmpresaId(empresaNome);
             if (empresaId) userData.idEmpresa = empresaId;
 
-            const setorId = await resolveSetorId(idSetor, setor);
+            const setorId = await resolveSetorId(idSetor, setorPermitido);
             if (setorId) reqData.idSetor = setorId;
             if (hasValue(motivo)) reqData.motivo = cleanString(motivo);
             if (hasValue(descricao)) reqData.descricao = cleanString(descricao);
@@ -378,7 +572,7 @@ class PortariaController {
 
                 let requisicaoAtualizada = null;
 
-                if (Object.keys(reqData).length > 0) {
+                if (Object.keys(reqData).length > 0 || hasValue(responsavel)) {
                     const requisicao = await tx.requisicaoDeVisita.findFirst({
                         where: { idUsuario: id },
                         orderBy: [
@@ -388,6 +582,15 @@ class PortariaController {
                     });
 
                     if (requisicao) {
+                        if (hasValue(responsavel)) {
+                            reqData.descricao = upsertDescricaoField(
+                                reqData.descricao || requisicao.descricao,
+                                "Setor responsavel",
+                                responsavel,
+                                ["Area responsavel", "Setor"]
+                            );
+                        }
+
                         requisicaoAtualizada = await tx.requisicaoDeVisita.update({
                             where: { id: requisicao.id },
                             data: reqData
