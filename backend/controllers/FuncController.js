@@ -23,16 +23,16 @@ class FuncController {
         try {
             const func = await prisma.view_perfil_completo_usuario.findMany({
                 where: {
-                    tipo: { not: null
-                        
-                    }
+                    cargo: { not: null }
                 }
             }) // le os funcionaruos da tabela "funcionarios" incluindo os dados relacionados das tabelas "usuarios" e "setores"
+            console.log(func)
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Funcionarios lidos com sucesso",
                 data: func
             })
+
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
