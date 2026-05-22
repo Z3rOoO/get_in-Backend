@@ -223,7 +223,7 @@ class DispositivosController {
 
                 if (!tag) { // CRACHA NÃO CADASTRADO NO SISTEMA 
 
-                      client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO NO SISTEMA")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO NO SISTEMA")
 
                     return res.status(404).json({
                         sucesso: false,
@@ -254,7 +254,27 @@ class DispositivosController {
 
                 console.log("funcionario: " + funcionario)
 
+                const log = {
+                    idDispositivo: Number(id),
+                    idUsuario: tag.idUsuario,
+                    data: new Date().toISOString()
+                }
+
+
                 if (funcionario != null) {
+
+                    console.log(log)
+                    const resp = await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                        headers: { "Content-Type": "application/json" },
+                        method: "POST",
+                        body: JSON.stringify(log)
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        console.log(data)
+                    })
+
+
                     client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
                     return res.json({
                         sucesso: true,
@@ -272,10 +292,18 @@ class DispositivosController {
 
                 console.log(requisicao.status)
 
-
                 if (requisicao.length != 0) {
                     if (requisicao.status === "aprovado") {
+
+                        await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                            headers: { "Content-Type": "application/json" },
+                            method: "POST",
+                            body: JSON.stringify(log)
+                        })
+
                         client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
+
+
                         return res.status(200).json({
                             sucesso: true,
                             mensagem: "ACESSO PERMITIDO"

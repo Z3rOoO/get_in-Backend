@@ -9,6 +9,7 @@ router.get('/:id', Auth, LogsController.ReadById);
 router.get('/user/:idUsuario', Auth, LogsController.ReadByUser);
 router.get('/device/:idDispositivo', Auth, LogsController.ReadByDevice);
 router.post('/', Auth, LogsController.Create);
+router.post('/disp', LogsController.dispLog);
 router.put('/:id', Auth, LogsController.Update);
 router.delete('/:id', Auth, LogsController.Delete);
 

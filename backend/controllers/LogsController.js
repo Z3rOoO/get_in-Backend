@@ -180,6 +180,87 @@ class LogsController {
             });
         }
     }
+
+    static async dispLog(req, res) {
+
+        try {
+
+            const { idDispositivo, idUsuario, data } = req.body; // puxar as informações do dispositivo
+
+            const logs = await prisma.Log.findFirst({ // verifica se tem um log com essas informações 
+                where: {
+                    idDispositivo: idDispositivo,
+                    idUsuario: idUsuario
+                }, orderBy: {
+                    id: "desc"
+                }
+            })
+
+
+            if (!logs) { // não tem log desse usuario para essa dispositivo
+
+                const log = await prisma.log.create({ // cria um novo log com data de entrada
+                    data: {
+                        idDispositivo: idDispositivo,
+                        idUsuario: idUsuario,
+                        dataDeEntrada: data,
+                        dataDeSaida: null
+                    }
+                })
+
+                return res.status(201).json({
+                    sucesso: true,
+                    mensagem: "Criado log com sucesso",
+                    data: log
+                })
+            }
+
+            if (logs.dataDeEntrada != null && logs.dataDeSaida != null) { // cria um novo log
+                const log = await prisma.log.create({
+                    data: {
+                        idDispositivo: idDispositivo,
+                        idUsuario: idUsuario,
+                        dataDeEntrada: data,
+                        dataDeSaida: null
+                    }
+                })
+
+                return res.status(201).json({
+                    sucesso: true,
+                    mensagem: "Criado log com sucesso",
+                    data: log
+                })
+
+            }
+
+            if (logs.dataDeEntrada != null && logs.dataDeSaida == null) { // atualiza colocando a data de saida do usuario
+                const log = await prisma.log.update({ // atualiza a saida do log
+                    where: {
+                        id: logs.id
+                    }, data: {
+                        dataDeSaida: data
+                    }
+                })
+
+                return res.status(201).json({
+                    sucesso: true,
+                    mensagem: "Criado log com sucesso",
+                    data: log
+                })
+
+            }
+
+
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro interno do servidor",
+                erro: e.message
+            })
+        }
+
+
+    }
 }
 
 export default LogsController;
