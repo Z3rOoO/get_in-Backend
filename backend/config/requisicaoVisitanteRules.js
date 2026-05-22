@@ -59,14 +59,26 @@ export function normalizeMotivoVisita(motivo) {
 }
 
 export async function expireOldPendingVisitRequests(client = prisma) {
-    const { start } = getTodayRange();
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     return client.requisicaoDeVisita.updateMany({
         where: {
             status: STATUS_REQUISICAO.PENDENTE,
-            dataDaRequisicao: {
-                lt: start
-            }
+            OR: [
+                {
+                    validade: {
+                        not: null,
+                        lte: now
+                    }
+                },
+                {
+                    validade: null,
+                    dataDaRequisicao: {
+                        lte: oneDayAgo
+                    }
+                }
+            ]
         },
         data: {
             status: STATUS_REQUISICAO.EXPIRADO

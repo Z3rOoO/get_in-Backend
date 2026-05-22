@@ -27,6 +27,48 @@ function normalizeDescricaoLabel(value) {
         .replace(/[\u0300-\u036f]/g, "");
 }
 
+function getDescricaoValue(descricao, labels) {
+    if (!hasValue(descricao)) return "";
+
+    const normalizedLabels = new Set(labels.map(normalizeDescricaoLabel));
+    const parts = String(descricao)
+        .split("|")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    for (const part of parts) {
+        const separatorIndex = part.indexOf(":");
+        if (separatorIndex === -1) continue;
+
+        const label = part.slice(0, separatorIndex);
+        const value = part.slice(separatorIndex + 1).trim();
+
+        if (normalizedLabels.has(normalizeDescricaoLabel(label))) {
+            return value;
+        }
+    }
+
+    return "";
+}
+
+function getObservacaoFromDescricao(descricao) {
+    const observacao = getDescricaoValue(descricao, [
+        "Observacoes",
+        "Observacao",
+        "Observações",
+        "Observação",
+        "Observacao da Portaria",
+        "Observação da Portaria"
+    ]);
+    const normalized = normalizeDescricaoLabel(observacao);
+
+    if (!observacao || normalized === "nenhuma" || normalized.includes("nenhuma observacao")) {
+        return null;
+    }
+
+    return observacao;
+}
+
 function upsertDescricaoField(descricao, label, value, aliases = []) {
     const cleanValue = hasValue(value) ? cleanString(value) : "Nao informado";
     const labels = new Set([label, ...aliases].map(normalizeDescricaoLabel));
@@ -244,16 +286,11 @@ class PortariaController {
 
     static async readPendencias(req, res) {
         try {
-            const { start, end } = getTodayRange();
             await expireOldPendingVisitRequests();
 
             const requisicoes = await prisma.requisicaoDeVisita.findMany({
                 where: {
-                    status: STATUS_REQUISICAO.PENDENTE,
-                    dataDaRequisicao: {
-                        gte: start,
-                        lt: end
-                    }
+                    status: STATUS_REQUISICAO.PENDENTE
                 },
                 include: {
                     usuario: {
@@ -279,6 +316,7 @@ class PortariaController {
                     requisicao.id
                 );
                 const setor = requisicao.setores?.nome || null;
+                const observacao = getObservacaoFromDescricao(requisicao.descricao);
                 const visitanteAtual = visitantesPorIdentidade.get(identidade);
 
                 if (!visitanteAtual) {
@@ -294,7 +332,7 @@ class PortariaController {
                         setores: setor ? [setor] : [],
                         motivo: normalizeMotivoVisita(requisicao.motivo),
                         descricao: requisicao.descricao || null,
-                        observacoes: requisicao.descricao || null,
+                        observacoes: observacao,
                         solicitacao: requisicao.status,
                         status: requisicao.status,
                         dataDaRequisicao: requisicao.dataDaRequisicao,
@@ -319,7 +357,10 @@ class PortariaController {
 
                 if (!visitanteAtual.descricao && requisicao.descricao) {
                     visitanteAtual.descricao = requisicao.descricao;
-                    visitanteAtual.observacoes = requisicao.descricao;
+                }
+
+                if (!visitanteAtual.observacoes && observacao) {
+                    visitanteAtual.observacoes = observacao;
                 }
             }
 
