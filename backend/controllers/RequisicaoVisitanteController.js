@@ -1,4 +1,10 @@
 import { prisma } from "../config/prisma.js";
+import {
+    STATUS_REQUISICAO,
+    expireOldPendingVisitRequests,
+    normalizeMotivoVisita,
+    normalizeStatusRequisicao
+} from "../config/requisicaoVisitanteRules.js";
 
 function parseId(value) {
     const id = Number(value);
@@ -11,13 +17,6 @@ function normalizeSetorIds(idSetor) {
     return Array.from(
         new Set(ids.map(parseId).filter(Boolean))
     );
-}
-
-function normalizeStatus(status) {
-    const value = String(status || "").trim().toLowerCase();
-    const validStatuses = ["pendente", "aprovado", "recusado"];
-
-    return validStatuses.includes(value) ? value : null;
 }
 
 class RequisicaoVisitanteController {
@@ -57,11 +56,11 @@ class RequisicaoVisitanteController {
                         data: {
                             idUsuario: usuarioId,
                             idSetor: setorId,
-                            motivo: motivo || null,
+                            motivo: motivo ? normalizeMotivoVisita(motivo) : null,
                             validade: validade ? new Date(validade) : null,
                             descricao: descricao || null,
                             empresa: empresa || null,
-                            status: "pendente"
+                            status: STATUS_REQUISICAO.PENDENTE
                         },
                         include: {
                             usuario: true,
@@ -87,6 +86,8 @@ class RequisicaoVisitanteController {
 
     static async Read(req, res) {
         try {
+            await expireOldPendingVisitRequests();
+
             const resultado = await prisma.requisicaoDeVisita.findMany({
                 include: {
                     usuario: {
@@ -117,6 +118,7 @@ class RequisicaoVisitanteController {
     static async ReadById(req, res) {
         try {
             const { id } = req.params;
+            await expireOldPendingVisitRequests();
 
             const resultado = await prisma.requisicaoDeVisita.findUnique({
                 where: { id: Number(id) },
@@ -154,10 +156,12 @@ class RequisicaoVisitanteController {
             const { id } = req.params;
             const { status, motivo, validade, descricao, empresa } = req.body;
             const data = {};
-            const normalizedStatus = normalizeStatus(status);
+            await expireOldPendingVisitRequests();
+
+            const normalizedStatus = normalizeStatusRequisicao(status);
 
             if (normalizedStatus) data.status = normalizedStatus;
-            if (motivo !== undefined) data.motivo = motivo || null;
+            if (motivo !== undefined) data.motivo = motivo ? normalizeMotivoVisita(motivo) : null;
             if (validade !== undefined) data.validade = validade ? new Date(validade) : null;
             if (descricao !== undefined) data.descricao = descricao || null;
             if (empresa !== undefined) data.empresa = empresa || null;
@@ -188,6 +192,7 @@ class RequisicaoVisitanteController {
     static async BulkUpdate(req, res) {
         try {
             const updates = Array.isArray(req.body?.updates) ? req.body.updates : [];
+            await expireOldPendingVisitRequests();
 
             if (updates.length === 0) {
                 return res.status(400).json({
@@ -201,7 +206,7 @@ class RequisicaoVisitanteController {
 
                 for (const item of updates) {
                     const id = parseId(item.id);
-                    const status = normalizeStatus(item.status);
+                    const status = normalizeStatusRequisicao(item.status);
 
                     if (!id || !status) {
                         throw new Error("Atualizacao invalida. Informe id e status validos.");
@@ -218,7 +223,7 @@ class RequisicaoVisitanteController {
 
                     requisicoesAtualizadas.push(requisicao);
 
-                    if (status === "aprovado") {
+                    if (status === STATUS_REQUISICAO.APROVADO) {
                         const logAtivo = await tx.log.findFirst({
                             where: {
                                 idUsuario: requisicao.idUsuario,

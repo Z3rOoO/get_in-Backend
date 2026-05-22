@@ -5,6 +5,12 @@ import { comparePassword, hashPassword } from '../config/utils.js';
 
 dotenv.config()
 
+const AVATAR_PUBLIC_URL = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+
+function getAvatarUrl(path) {
+    return path ? `${AVATAR_PUBLIC_URL}/${path}` : null;
+}
+
 class AuthController {
 
     static async login(req, res) {
@@ -60,7 +66,8 @@ class AuthController {
             const funcionario = {
                 ...funcionarioSeguro,
                 setor: func.setores_funcionarios_idSetorTosetores || null,
-                setores: func.setores_funcionarios_idSetorTosetores || null
+                setores: func.setores_funcionarios_idSetorTosetores || null,
+                avatarUrl: getAvatarUrl(func.imagem)
             }
 
             return res.status(200).json({

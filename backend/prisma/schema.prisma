@@ -275,6 +275,7 @@ enum StatusRequisicao {
   pendente
   aprovado
   recusado
+  expirado
 }
 
 enum StatusAcesso {

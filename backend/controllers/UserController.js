@@ -314,6 +314,8 @@ class UserController {
                 });
             }
 
+            res.set("Cache-Control", "no-store");
+
             return res.status(200).json({
                 sucesso: true,
                 data: buildProfile(funcionario)
@@ -371,6 +373,8 @@ class UserController {
             });
 
             const funcionarioAtualizado = await getCurrentFuncionario(req.user.id);
+
+            res.set("Cache-Control", "no-store");
 
             return res.status(200).json({
                 sucesso: true,

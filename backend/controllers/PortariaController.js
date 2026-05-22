@@ -1,4 +1,10 @@
 import { prisma } from "../config/prisma.js";
+import {
+    STATUS_REQUISICAO,
+    expireOldPendingVisitRequests,
+    getTodayRange,
+    normalizeMotivoVisita
+} from "../config/requisicaoVisitanteRules.js";
 
 function hasValue(value) {
     return value !== undefined && value !== null && String(value).trim() !== "";
@@ -11,16 +17,6 @@ function cleanString(value) {
 function parseId(value) {
     const id = Number(value);
     return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-function getTodayRange() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-
-    return { start, end };
 }
 
 function normalizeDescricaoLabel(value) {
@@ -134,6 +130,8 @@ class PortariaController {
     static async readVisitanteLocal(req, res) {
         try {
             const { start, end } = getTodayRange();
+            await expireOldPendingVisitRequests();
+
             const visitantes = await prisma.$queryRaw`
                 WITH requisicoes_visitantes AS (
                     SELECT
@@ -145,7 +143,6 @@ class PortariaController {
                         STRING_AGG(DISTINCT s.nome, ', ' ORDER BY s.nome) AS setor,
                         MAX(rv."dataDaRequisicao") AS "dataDaRequisicao",
                         CASE
-                            WHEN BOOL_OR(rv.status = 'pendente') THEN 'pendente'
                             WHEN BOOL_OR(rv.status = 'aprovado') THEN 'aprovado'
                             ELSE 'recusado'
                         END AS "statusRequisicao"
@@ -153,9 +150,7 @@ class PortariaController {
                     LEFT JOIN setores s ON s.id = rv."idSetor"
                     LEFT JOIN usuarios u ON u.id = rv."idUsuario"
                     LEFT JOIN empresas e ON e.id = u."idEmpresa"
-                    WHERE rv.status IN ('pendente', 'aprovado')
-                        AND rv."dataDaRequisicao" >= ${start}
-                        AND rv."dataDaRequisicao" < ${end}
+                    WHERE rv.status = 'aprovado'
                     GROUP BY rv."idUsuario"
                 ),
                 ultimos_logs AS (
@@ -180,21 +175,37 @@ class PortariaController {
                     rv.motivo,
                     rv.descricao,
                     ul.id AS "idLog",
-                    ul."dataDeEntrada" AS entrada,
-                    ul."dataDeEntrada" AS "dataEntrada",
-                    ul."dataDeSaida" AS "dataSaida",
+                    CASE
+                        WHEN ul."dataDeEntrada" IS NOT NULL
+                            AND (ul."dataDeSaida" IS NULL OR (ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end}))
+                            THEN ul."dataDeEntrada"
+                        ELSE rv."dataDaRequisicao"
+                    END AS entrada,
+                    CASE
+                        WHEN ul."dataDeEntrada" IS NOT NULL
+                            AND (ul."dataDeSaida" IS NULL OR (ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end}))
+                            THEN ul."dataDeEntrada"
+                        ELSE rv."dataDaRequisicao"
+                    END AS "dataEntrada",
+                    CASE
+                        WHEN ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end} THEN ul."dataDeSaida"
+                        ELSE NULL
+                    END AS "dataSaida",
                     u.celular,
                     u.celular AS telefone,
                     u.email,
                     rv."dataDaRequisicao",
                     CASE
                         WHEN ul."dataDeEntrada" IS NOT NULL AND ul."dataDeSaida" IS NULL THEN 'dentro'
-                        WHEN ul."dataDeSaida" IS NOT NULL THEN 'saida'
+                        WHEN ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end} THEN 'saida'
                         WHEN rv."statusRequisicao" = 'aprovado' THEN 'dentro'
                         ELSE rv."statusRequisicao"
                     END AS status,
                     CASE
-                        WHEN ul."dataDeSaida" IS NULL AND rv."statusRequisicao" = 'aprovado' THEN true
+                        WHEN ul."dataDeEntrada" IS NOT NULL AND ul."dataDeSaida" IS NULL THEN true
+                        WHEN rv."statusRequisicao" = 'aprovado'
+                            AND (ul."dataDeSaida" IS NULL OR ul."dataDeSaida" < ${start} OR ul."dataDeSaida" >= ${end})
+                            THEN true
                         ELSE false
                     END AS "podeCheckout"
                 FROM requisicoes_visitantes rv
@@ -203,8 +214,17 @@ class PortariaController {
                 LEFT JOIN empresas e ON u."idEmpresa" = e.id
                 LEFT JOIN ultimos_logs ul ON ul."idUsuario" = u.id AND ul.ordem = 1
                 WHERE f."idUsuario" IS NULL
+                    AND (
+                        (ul."dataDeEntrada" IS NOT NULL AND ul."dataDeSaida" IS NULL)
+                        OR (ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end})
+                        OR (rv."dataDaRequisicao" >= ${start} AND rv."dataDaRequisicao" < ${end})
+                    )
                 ORDER BY
-                    COALESCE(ul."dataDeSaida", ul."dataDeEntrada", rv."dataDaRequisicao") DESC NULLS LAST,
+                    COALESCE(
+                        CASE WHEN ul."dataDeSaida" >= ${start} AND ul."dataDeSaida" < ${end} THEN ul."dataDeSaida" END,
+                        CASE WHEN ul."dataDeSaida" IS NULL THEN ul."dataDeEntrada" END,
+                        rv."dataDaRequisicao"
+                    ) DESC NULLS LAST,
                     rv."idRequisicao" DESC
             `;
 
@@ -225,9 +245,11 @@ class PortariaController {
     static async readPendencias(req, res) {
         try {
             const { start, end } = getTodayRange();
+            await expireOldPendingVisitRequests();
+
             const requisicoes = await prisma.requisicaoDeVisita.findMany({
                 where: {
-                    status: "pendente",
+                    status: STATUS_REQUISICAO.PENDENTE,
                     dataDaRequisicao: {
                         gte: start,
                         lt: end
@@ -270,7 +292,7 @@ class PortariaController {
                         empresa: requisicao.empresa || usuario.empresas?.nome || null,
                         setor,
                         setores: setor ? [setor] : [],
-                        motivo: requisicao.motivo || null,
+                        motivo: normalizeMotivoVisita(requisicao.motivo),
                         descricao: requisicao.descricao || null,
                         observacoes: requisicao.descricao || null,
                         solicitacao: requisicao.status,
@@ -292,7 +314,7 @@ class PortariaController {
                 }
 
                 if (!visitanteAtual.motivo && requisicao.motivo) {
-                    visitanteAtual.motivo = requisicao.motivo;
+                    visitanteAtual.motivo = normalizeMotivoVisita(requisicao.motivo);
                 }
 
                 if (!visitanteAtual.descricao && requisicao.descricao) {
@@ -322,6 +344,8 @@ class PortariaController {
 
     static async readHistorico(req, res) {
         try {
+            await expireOldPendingVisitRequests();
+
             const registros = await prisma.$queryRaw`
                 WITH requisicoes_visitantes AS (
                     SELECT
@@ -336,6 +360,7 @@ class PortariaController {
                             WHEN BOOL_OR(rv.status = 'pendente') THEN 'pendente'
                             WHEN BOOL_OR(rv.status = 'aprovado') THEN 'aprovado'
                             WHEN BOOL_OR(rv.status = 'recusado') THEN 'recusado'
+                            WHEN BOOL_OR(rv.status = 'expirado') THEN 'expirado'
                             ELSE 'pendente'
                         END AS "statusRequisicao"
                     FROM requisicoes_de_visitas rv
@@ -439,7 +464,7 @@ class PortariaController {
                     ? await prisma.requisicaoDeVisita.findFirst({
                         where: {
                             idUsuario,
-                            status: "aprovado"
+                            status: STATUS_REQUISICAO.APROVADO
                         },
                         orderBy: [
                             { dataDaRequisicao: "desc" },
@@ -552,7 +577,7 @@ class PortariaController {
 
             const setorId = await resolveSetorId(idSetor, setorPermitido);
             if (setorId) reqData.idSetor = setorId;
-            if (hasValue(motivo)) reqData.motivo = cleanString(motivo);
+            if (hasValue(motivo)) reqData.motivo = normalizeMotivoVisita(motivo);
             if (hasValue(descricao)) reqData.descricao = cleanString(descricao);
             if (empresaNome) reqData.empresa = empresaNome;
             if (hasValue(validade)) {

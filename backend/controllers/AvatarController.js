@@ -7,9 +7,10 @@ class AvatarController {
     /**
      * Utilitário para gerar URL pública a partir do path salvo no banco
      */
-    static getPublicUrl(path) {
+    static getPublicUrl(path, version = null) {
         if (!path) return null;
-        return `${url}/${path}`;
+        const publicUrl = `${url}/${path}`;
+        return version ? `${publicUrl}?v=${encodeURIComponent(version)}` : publicUrl;
     }
 
     /**
@@ -46,12 +47,15 @@ class AvatarController {
                 });
             }
 
+            res.set("Cache-Control", "no-store");
+
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Imagem obtida com sucesso",
                 data: {
                     funcId: funcionario.id,
                     nome: funcionario.usuario.nome,
+                    avatarUrl: AvatarController.getPublicUrl(funcionario.imagem),
                     imagem: AvatarController.getPublicUrl(funcionario.imagem)
                 }
             });
@@ -156,13 +160,18 @@ class AvatarController {
                 }
             });
 
+            const avatarUrl = AvatarController.getPublicUrl(updatedFunc.imagem, timestamp);
+            res.set("Cache-Control", "no-store");
+
             return res.status(200).json({
                 sucesso: true,
                 mensagem: "Imagem enviada com sucesso",
                 data: {
                     id: updatedFunc.id,
                     nome: updatedFunc.usuario.nome,
-                    imagem: AvatarController.getPublicUrl(updatedFunc.imagem)
+                    avatarUrl,
+                    imagem: avatarUrl,
+                    imagemPath: updatedFunc.imagem
                 }
             });
 
@@ -232,6 +241,8 @@ class AvatarController {
                     }
                 }
             });
+
+            res.set("Cache-Control", "no-store");
 
             return res.status(200).json({
                 sucesso: true,

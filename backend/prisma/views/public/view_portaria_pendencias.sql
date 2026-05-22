@@ -40,7 +40,11 @@ FROM
     LEFT JOIN empresas e ON ((e.id = u."idEmpresa"))
   )
 WHERE
-  (r.status = 'pendente' :: "StatusRequisicao")
+  (
+    (r.status = 'pendente' :: "StatusRequisicao")
+    AND (r."dataDaRequisicao" >= CURRENT_DATE)
+    AND (r."dataDaRequisicao" < (CURRENT_DATE + INTERVAL '1 day'))
+  )
 GROUP BY
   r."idUsuario",
   u.nome,
