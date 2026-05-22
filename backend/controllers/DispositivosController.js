@@ -317,7 +317,7 @@ class DispositivosController {
                         })
                     }
                     if (requisicao.status === "pendente") {
-                        client.publish(`get-in-3td/dispositivos/${id}`, "/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
+                        client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
                         return res.status(200).json({
                             sucesso: false,
                             mensagem: "AGUARDANDO VERIFICAÇÃO DO SUPERVISOR"
