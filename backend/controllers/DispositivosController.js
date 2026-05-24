@@ -187,8 +187,7 @@ class DispositivosController {
             // /dispositivos/idDoDispositivo/cracha
             const { id, cracha } = req.params
 
-            await client.on("connect", async () => {
-                console.log("conectou aqui na api")
+            client.on("connect", async () => {
                 client.subscribe(`get-in-3td/dispositivos/${id}`)
 
 
@@ -201,8 +200,6 @@ class DispositivosController {
                         idSetor: true
                     }
                 })
-
-                console.log(dispositivo)
 
                 if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
 
@@ -241,9 +238,6 @@ class DispositivosController {
                     })
                 }
 
-                console.log("id: " + tag.idUsuario)
-                console.log("idSetor: " + dispositivo.idSetor)
-
 
                 const funcionario = await prisma.funcionario.findFirst({
                     where: {
@@ -252,7 +246,6 @@ class DispositivosController {
                     }
                 })
 
-                console.log("funcionario: " + funcionario)
 
                 const log = {
                     idDispositivo: Number(id),
@@ -263,15 +256,10 @@ class DispositivosController {
 
                 if (funcionario != null) {
 
-                    console.log(log)
-                    const resp = await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                    await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
                         headers: { "Content-Type": "application/json" },
                         method: "POST",
                         body: JSON.stringify(log)
-                    })
-                    .then(resp => resp.json())
-                    .then(data => {
-                        console.log(data)
                     })
 
 
@@ -290,9 +278,10 @@ class DispositivosController {
                     }
                 })
 
-                console.log(requisicao.status)
+                
 
-                if (requisicao.length != 0) {
+
+                if (requisicao != null && requisicao.length != 0) {
                     if (requisicao.status === "aprovado") {
 
                         await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
@@ -325,6 +314,8 @@ class DispositivosController {
                     }
                 }
                 else {
+
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO NEGADO")
                     return res.status(404).json({
                         sucesso: false,
                         mensagem: "ACESSO NEGADO"
