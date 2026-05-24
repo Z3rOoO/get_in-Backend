@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import mqtt from "mqtt";
+const client = await mqtt.connect("mqtt://broker.hivemq.com")
 
 function parseOptionalNumber(value) {
     const number = Number(value);
@@ -181,7 +182,7 @@ class DispositivosController {
 
     static async verificarCracha(req, res) {
 
-        const client = await mqtt.connect("mqtt://broker.hivemq.com")
+        
 
         try {
             // /dispositivos/idDoDispositivo/cracha
