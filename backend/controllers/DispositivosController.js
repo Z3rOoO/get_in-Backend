@@ -1,6 +1,6 @@
 import { prisma } from "../config/prisma.js";
-import mqtt from "mqtt";
-const client = await mqtt.connect("mqtt://broker.hivemq.com")
+import { client } from "../config/mqtt.js";
+
 
 function parseOptionalNumber(value) {
     const number = Number(value);
@@ -182,13 +182,10 @@ class DispositivosController {
 
     static async verificarCracha(req, res) {
 
-        
-
         try {
             // /dispositivos/idDoDispositivo/cracha
             const { id, cracha } = req.params
 
-            client.on("connect", async () => {
                 client.subscribe(`get-in-3td/dispositivos/${id}`)
 
 
@@ -279,7 +276,7 @@ class DispositivosController {
                     }
                 })
 
-                
+
 
 
                 if (requisicao != null && requisicao.length != 0) {
@@ -322,9 +319,6 @@ class DispositivosController {
                         mensagem: "ACESSO NEGADO"
                     })
                 }
-
-
-            })
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,

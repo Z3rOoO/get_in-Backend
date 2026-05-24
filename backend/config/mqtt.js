@@ -1,8 +1,9 @@
 import mqtt from "mqtt"
 
+export const client = mqtt.connect("mqtt://broker.hivemq.com");
+
 export const connectMQTT = () => {
 
-    const client = mqtt.connect("mqtt://broker.hivemq.com")
 
     client.on("connect", () => {
         console.log("conectado ao broker")
@@ -14,7 +15,7 @@ export const connectMQTT = () => {
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        await fetch(`https://get-in-ilp5.onrender.com/dispositivos/${id}/${cracha}`)
+        await fetch(`http://localhost:3030/dispositivos/${id}/${cracha}`)
     })
 
     client.on("error", (err) => {
