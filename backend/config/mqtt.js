@@ -15,7 +15,7 @@ export const connectMQTT = () => {
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        await fetch(`http://localhost:3030/dispositivos/${id}/${cracha}`)
+        await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
     })
 
     client.on("error", (err) => {
