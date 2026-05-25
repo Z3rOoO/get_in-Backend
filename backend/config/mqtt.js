@@ -16,7 +16,7 @@ export const connectMQTT = () => {
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
         try {
-            const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
+            const response = await fetch(`https://get-in-ilp5.onrender.com/dispositivos/${id}/${cracha}`)
             console.log("Status da resposta:", response.status)
             
             if (response.ok) {

@@ -276,7 +276,7 @@ class DispositivosController {
                 if (requisicao != null ) {
                     if (requisicao.status === "aprovado") {
 
-                        await fetch(`${process.env.API_URL}/logs/disp`, {
+                        await fetch(`https://get-in-ilp5.onrender.com/logs/disp`, {
                             headers: { "Content-Type": "application/json" },
                             method: "POST",
                             body: JSON.stringify(log)
