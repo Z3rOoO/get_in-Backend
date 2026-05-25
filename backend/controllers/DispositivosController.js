@@ -186,9 +186,6 @@ class DispositivosController {
             // /dispositivos/idDoDispositivo/cracha
             const { id, cracha } = req.params;
 
-                client.subscribe(`get-in-3td/dispositivos/${id}`)
-
-
                 // VERIFICAÇÕES DE CRACHA E USUARIO
 
                 const dispositivo = await prisma.dispositivo.findUnique({
