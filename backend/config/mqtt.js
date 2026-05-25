@@ -1,4 +1,4 @@
-import mqtt from "mqtt" 
+import mqtt from "mqtt"
 
 export const client = mqtt.connect("mqtt://broker.hivemq.com");
 
@@ -11,17 +11,18 @@ export const connectMQTT = () => {
     })
 
     client.on("message", async (topic, message) => {
-        const [ id, cracha ] = message.toString().split(",")
+        const [id, cracha] = message.toString().split(",")
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        try {
-            const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
-            const data = await response.json()
+        const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
+        const data = await response.json()
+        if (data.sucesso === true) {
             console.log("Resposta do verificarCracha:", data)
-        } catch (error) {
-            console.error("Erro ao fazer fetch para verificarCracha:", error)
-            client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO NA REQUISIÇÃO")
+
+        } else {
+            console.log("Erro ao verificar crachá:", data.mensagem)
+            publishMessage(`get-in-3td/dispositivos/${id}`, "false/ERRO NA REQUISIÇÃO")
         }
     })
 
