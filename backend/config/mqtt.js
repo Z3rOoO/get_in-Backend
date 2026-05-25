@@ -17,13 +17,7 @@ export const connectMQTT = () => {
         console.log(`cracha: ` + cracha)
         const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
         const data = await response.json()
-        if (data.sucesso === true) {
-            console.log("Resposta do verificarCracha:", data)
-
-        } else {
-            console.log("Erro ao verificar crachá:", data.mensagem)
-            publishMessage(`get-in-3td/dispositivos/${id}`, "false/ERRO NA REQUISIÇÃO")
-        }
+        console.log("Resposta do verificarCracha:", data)
     })
 
     client.on("error", (err) => {
