@@ -184,7 +184,7 @@ class DispositivosController {
 
         try {
             // /dispositivos/idDoDispositivo/cracha
-            const { id, cracha } = req.params
+            const { id, cracha } = req.params;
 
                 client.subscribe(`get-in-3td/dispositivos/${id}`)
 
@@ -276,13 +276,10 @@ class DispositivosController {
                     }
                 })
 
-
-
-
-                if (requisicao != null && requisicao.length != 0) {
+                if (requisicao != null ) {
                     if (requisicao.status === "aprovado") {
 
-                        await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                        await fetch(`${process.env.API_URL}/logs/disp`, {
                             headers: { "Content-Type": "application/json" },
                             method: "POST",
                             body: JSON.stringify(log)
