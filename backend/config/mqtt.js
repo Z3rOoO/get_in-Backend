@@ -15,9 +15,23 @@ export const connectMQTT = () => {
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
-        const data = await response.json()
-        console.log("Resposta do verificarCracha:", data)
+        try {
+            const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
+            console.log("Status da resposta:", response.status)
+            
+            if (!response.ok) {
+                const text = await response.text()
+                console.error("Resposta de erro:", text)
+                client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO NA API")
+                return
+            }
+            
+            const data = await response.json()
+            console.log("Resposta do verificarCracha:", data)
+        } catch (error) {
+            console.error("Erro ao fazer fetch para verificarCracha:", error.message)
+            client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO NA REQUISIÇÃO")
+        }
     })
 
     client.on("error", (err) => {
