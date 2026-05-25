@@ -1,4 +1,4 @@
-import mqtt from "mqtt"
+import mqtt from "mqtt" 
 
 export const client = mqtt.connect("mqtt://broker.hivemq.com");
 
@@ -15,7 +15,14 @@ export const connectMQTT = () => {
         console.log(topic)
         console.log(`id : ` + id)
         console.log(`cracha: ` + cracha)
-        fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
+        try {
+            const response = await fetch(`${process.env.API_URL}/dispositivos/${id}/${cracha}`)
+            const data = await response.json()
+            console.log("Resposta do verificarCracha:", data)
+        } catch (error) {
+            console.error("Erro ao fazer fetch para verificarCracha:", error)
+            client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO NA REQUISIÇÃO")
+        }
     })
 
     client.on("error", (err) => {
