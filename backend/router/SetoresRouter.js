@@ -5,9 +5,10 @@ const router = express.Router();
 
 
 router.get('/', Auth, SetoresController.read);
+router.get('/:id', Auth, SetoresController.readById);
 router.post('/', Auth, SetoresController.create);
-
-
+router.put('/:id', Auth, SetoresController.update);
+router.delete('/:id', Auth, SetoresController.delete);
 
 
 export default router;

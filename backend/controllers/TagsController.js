@@ -22,6 +22,13 @@ class TagsController {
     static async Read(req, res) {
         try {
             const tags = await prisma.tag.findMany({
+                include: {
+                    usuario: {
+                        include: {
+                            departamentos: true
+                        }
+                    }
+                },
                 orderBy: [
                     { dataDeCriacao: "desc" },
                     { id: "desc" }
@@ -46,11 +53,17 @@ class TagsController {
         try {
             const tag = await prisma.tag.findFirst({
                 where: { idUsuario: null },
+                include: {
+                    usuario: true
+                },
                 orderBy: [
                     { dataDeCriacao: "desc" },
                     { id: "desc" }
                 ]
             }) || await prisma.tag.findFirst({
+                include: {
+                    usuario: true
+                },
                 orderBy: [
                     { dataDeCriacao: "desc" },
                     { id: "desc" }

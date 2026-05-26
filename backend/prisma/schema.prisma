@@ -145,9 +145,25 @@ model setores {
 }
 
 model empresas {
-  id       Int       @id @default(autoincrement())
-  nome     String    @db.VarChar
-  usuarios Usuario[]
+  id          Int       @id @default(autoincrement())
+  nome        String    @db.VarChar
+  cnpj        String?   @db.VarChar(20)
+  responsavel String?   @db.VarChar(150)
+  contato     String?   @db.VarChar(150)
+  celular     String?   @db.VarChar(20)
+  categoria   String?   @db.VarChar(100)
+  status      String?   @default("Ativa") @db.VarChar(20)
+  usuarios    Usuario[]
+}
+
+model PermissoesConfig {
+  id                 Int      @id @default(autoincrement())
+  chave              String   @unique @db.VarChar(80)
+  valor              Json
+  dataDeCriacao      DateTime @default(now())
+  dataDeAtualizacao  DateTime @updatedAt
+
+  @@map("permissoes_config")
 }
 
 view view_perfil_completo_usuario {
@@ -204,8 +220,9 @@ view view_portaria_visitantes {
 }
 
 view view_gestores {
-  id     Int?
-  gestor String? @db.VarChar(150)
+  id        Int?
+  idUsuario Int?
+  gestor    String? @db.VarChar(150)
 }
 
 view view_portaria_pendencias {

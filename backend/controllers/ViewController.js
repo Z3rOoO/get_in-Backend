@@ -34,7 +34,7 @@ class ViewController {
                     JOIN usuarios u ON l."idUsuario" = u.id
                     JOIN dispositivos disp ON l."idDispositivo" = disp.id
                     LEFT JOIN funcionarios f ON u.id = f."idUsuario"
-                    LEFT JOIN departamentos d ON f."idDepartamento" = d.id
+                    LEFT JOIN setores d ON f."idSetor" = d.id
             `;
             const data = await prisma.$queryRawUnsafe(query);
             return res.status(200).json({ sucesso: true, data });

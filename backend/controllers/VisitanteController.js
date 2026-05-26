@@ -1,127 +1,145 @@
 import { prisma } from "../config/prisma.js";
+import { STATUS_REQUISICAO, normalizeMotivoVisita } from "../config/requisicaoVisitanteRules.js";
 
-class VisitanteController {
-    static async criar(req, res) {
-
-        let usuario
-
-        try {
-
-
-            // pega os dados da requisição
-            const { nome, cpf, idEmpresa, motivo, celular, email, idSetor } = req.body
-
-
-            // por só ter um departamento na empresa deixamos fixo o valor
-            const idDep = 1
-
-            // pega as informações para a tabela usuarios
-            const infoUser = { nome, cpf, celular, email, idEmpresa, idDep }
-
-            // verifica se existe o mesmo cpf cadastrado na tabela usuarios
-            const existeCPF = await prisma.usuario.findFirst({
-                where: {
-                    cpf: cpf
-                }
-            })
-
-            // verifica se ja existe o mesmo email cadastrado na tabela usuarios
-            const existeEmail = await prisma.usuario.findFirst({
-                where: {
-                    cpf: email
-                }
-            })
-
-            // se existir cpf retorna um erro
-            if (existeCPF) {
-                return res.status(409).json({
-                    sucesso: false,
-                    mensagem: "ja existe um usuário cadastrado com esse CPF",
-                })
-            }
-
-
-            // se existir email retorna um erro
-            if (existeEmail) {
-                return res.status(409).json({
-                    sucesso: false,
-                    mensagem: "ja existe um usuário cadastrado com esse email",
-                })
-            }
-
-            // adiciona o visitante a tabela usuarios
-            usuario = await prisma.usuario.create({
-                data: infoUser
-            })
-
-            // pega o nome da empresa 
-            const empresa = await prisma.empresas.findFirst({
-                where: {
-                    id: idEmpresa
-                }, select: {
-                    nome: true
-                }
-            })
-
-            console.log(empresa.nome)
-
-
-            const dadosReq = await {
-                idUsuario: usuario.id,
-                idSetor: idSetor,
-                motivo: motivo,
-                validade: null,
-                descricao: null,
-                empresa: empresa
-            }
-
-
-            const respostaFetch = await fetch("https://get-in-ilp5.onrender.com/requisicao-visitante", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dadosReq)
-            })
-
-            if (!respostaFetch.ok) {
-                const dadosErroFetch = await respostaFetch.json().catch(() => ({}))
-
-                throw new Error(dadosErroFetch.erro || "A API de requisições rejeitou os dados.");
-            }
-            
-            res.status(201).json({
-                sucesso: true,
-                mensagem: "as requisições do visitante atual foi criadas com sucesso"
-            })
-
-
-        } catch (e) {
-
-            if (usuario && usuario.id) {
-                console.log("apagando usuario criado")
-                try {
-                    await prisma.usuario.delete({
-                        where: {
-                            id: usuario.id
-                        }
-                    })
-                    return res.status(500).json({
-                        sucesso: false,
-                        mensagem: "não foi possivel criar o usuario pois a requisição falhou",
-                        erro: e.message
-                    })
-
-                } catch (e) {
-                    console.error("erro ao tentar apagar usuario: " + e)
-                }
-            }
-
-            res.status(500).json({
-                sucesso: false,
-                mensagem: "Erro interno do servidor",
-                erro: e.message
-            })
-        }
-    }
+function parseId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-export default VisitanteController
+function cleanString(value) {
+  if (value === undefined || value === null) return undefined;
+  const text = String(value).trim();
+  return text || null;
+}
+
+async function resolveEmpresa(tx, { idEmpresa, empresa }) {
+  const empresaId = parseId(idEmpresa);
+  if (empresaId) {
+    const existente = await tx.empresas.findUnique({ where: { id: empresaId } });
+    return existente ? { id: existente.id, nome: existente.nome } : null;
+  }
+
+  const nome = cleanString(empresa);
+  if (!nome) {
+    return null;
+  }
+
+  const existente = await tx.empresas.findFirst({
+    where: { nome: { equals: nome, mode: "insensitive" } },
+  });
+
+  if (existente) {
+    return { id: existente.id, nome: existente.nome };
+  }
+
+  const criada = await tx.empresas.create({
+    data: {
+      nome,
+      status: "Ativa",
+    },
+  });
+
+  return { id: criada.id, nome: criada.nome };
+}
+
+class VisitanteController {
+  static async criar(req, res) {
+    try {
+      const {
+        nome,
+        cpf,
+        celular,
+        telefone,
+        email,
+        idEmpresa,
+        empresa,
+        idSetor,
+        motivo,
+        validade,
+        descricao,
+      } = req.body;
+
+      const nomeLimpo = cleanString(nome);
+      const cpfLimpo = cleanString(cpf);
+      const emailLimpo = cleanString(email)?.toLowerCase();
+      const celularLimpo = cleanString(celular || telefone);
+      const setorId = parseId(idSetor);
+
+      if (!nomeLimpo || !cpfLimpo || !emailLimpo || !setorId) {
+        return res.status(400).json({
+          sucesso: false,
+          mensagem: "nome, cpf, email e idSetor sao obrigatorios",
+        });
+      }
+
+      const resultado = await prisma.$transaction(async (tx) => {
+        const setor = await tx.setores.findUnique({ where: { id: setorId } });
+        if (!setor) {
+          throw new Error("Setor nao encontrado");
+        }
+
+        const empresaResolvida = await resolveEmpresa(tx, { idEmpresa, empresa });
+        const usuarioExistente = await tx.usuario.findFirst({
+          where: {
+            OR: [
+              { cpf: cpfLimpo },
+              { email: emailLimpo },
+            ],
+          },
+          include: { funcionarios: true },
+        });
+
+        if (usuarioExistente?.funcionarios?.length > 0) {
+          throw new Error("O CPF ou email informado pertence a um funcionario");
+        }
+
+        const userData = {
+          nome: nomeLimpo,
+          cpf: cpfLimpo,
+          email: emailLimpo,
+          celular: celularLimpo,
+          idEmpresa: empresaResolvida?.id || null,
+        };
+
+        const usuario = usuarioExistente
+          ? await tx.usuario.update({
+              where: { id: usuarioExistente.id },
+              data: userData,
+            })
+          : await tx.usuario.create({ data: userData });
+
+        const requisicao = await tx.requisicaoDeVisita.create({
+          data: {
+            idUsuario: usuario.id,
+            idSetor: setorId,
+            motivo: motivo ? normalizeMotivoVisita(motivo) : null,
+            validade: validade ? new Date(validade) : null,
+            descricao: cleanString(descricao) || null,
+            empresa: empresaResolvida?.nome || cleanString(empresa) || null,
+            status: STATUS_REQUISICAO.PENDENTE,
+          },
+          include: {
+            usuario: true,
+            setores: true,
+          },
+        });
+
+        return { usuario, requisicao };
+      });
+
+      return res.status(201).json({
+        sucesso: true,
+        mensagem: "Visitante e requisicao criados com sucesso",
+        data: resultado,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        sucesso: false,
+        mensagem: "Erro ao criar visitante",
+        erro: e.message,
+      });
+    }
+  }
+}
+
+export default VisitanteController;

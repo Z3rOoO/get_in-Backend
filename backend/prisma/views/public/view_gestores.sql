@@ -1,5 +1,6 @@
 SELECT
-  u.id,
+  f.id,
+  u.id AS "idUsuario",
   u.nome AS gestor
 FROM
   (

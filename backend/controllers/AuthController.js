@@ -97,6 +97,7 @@ class AuthController {
                 celular,
                 email,
                 idDep,
+                idDepartamento,
                 tipo,
                 dataDeNascimento,
                 imagem,
@@ -151,10 +152,9 @@ class AuthController {
 
                 const newFunc = {
                     idUsuario,
-                    // idSetor: Number(idSetor),
-                    idSetor: null,
+                    idSetor: idDep || idDepartamento ? Number(idDep || idDepartamento) : null,
                     tipo,
-                    dataDeNascimento: new Date(dataDeNascimento),
+                    dataDeNascimento: dataDeNascimento ? new Date(dataDeNascimento) : null,
                     imagem,
                     senhaHash: senhaHash
                 };
