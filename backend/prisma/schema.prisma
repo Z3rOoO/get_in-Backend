@@ -157,11 +157,11 @@ model empresas {
 }
 
 model PermissoesConfig {
-  id                 Int      @id @default(autoincrement())
-  chave              String   @unique @db.VarChar(80)
-  valor              Json
-  dataDeCriacao      DateTime @default(now())
-  dataDeAtualizacao  DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  chave             String   @unique @db.VarChar(80)
+  valor             Json
+  dataDeCriacao     DateTime @default(now())
+  dataDeAtualizacao DateTime @default(now()) @updatedAt
 
   @@map("permissoes_config")
 }

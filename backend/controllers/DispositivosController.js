@@ -215,11 +215,19 @@ class DispositivosController {
 
                 if (!tag) { // CRACHA NÃO CADASTRADO NO SISTEMA 
 
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/CRACHA NÃO CADASTRADO NO SISTEMA")
+                    client.publish(`get-in-3td/dispositivos/${id}`, "true/CRACHA CADASTRADO NO SISTEMA")
 
-                    return res.status(404).json({
-                        sucesso: false,
-                        mensagem: "CRACHA NÃO CADASTRADO NO SISTEMA"
+                    const newCracha = await prisma.tag.create({
+                        data: {
+                            codigoTag: cracha,
+                            idUsuario: null,
+                            status: "disponivel"
+                        }
+                    })
+
+                    return res.status(201).json({
+                        sucesso: true,
+                        mensagem: "CRACHA CADASTRADO NO SISTEMA"
                     })
                 }
 
