@@ -186,141 +186,186 @@ class DispositivosController {
             // /dispositivos/idDoDispositivo/cracha
             const { id, cracha } = req.params;
 
-                // VERIFICAÇÕES DE CRACHA E USUARIO
+            // VERIFICAÇÕES DE CRACHA E USUARIO
+            const dispositivo = await prisma.dispositivo.findUnique({
+                where: {
+                    id: Number(id)
+                }, select: {
+                    idSetor: true
+                }
+            })
 
-                const dispositivo = await prisma.dispositivo.findUnique({
-                    where: {
-                        id: Number(id)
-                    }, select: {
-                        idSetor: true
+            if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
+
+                client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO, DISPOSITIVO NÃO VINCULADO")
+
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "ERRO, DISPOSITIVO NÃO VINCULADO"
+                })
+            }
+
+            const tag = await prisma.tag.findUnique({ // pega a tag pelo pela id do cracha 
+                where: {
+                    codigoTag: cracha
+                }
+            })
+
+
+            if (!tag) { // CRACHA NÃO CADASTRADO NO SISTEMA 
+
+                client.publish(`get-in-3td/dispositivos/${id}`, "true/CRACHA CADASTRADO NO SISTEMA")
+
+                const newCracha = await prisma.tag.create({
+                    data: {
+                        codigoTag: cracha,
+                        idUsuario: null,
+                        status: "disponivel"
                     }
                 })
 
-                if (!dispositivo) { // verifica se o dispositivo existe, se não existir, retorna que o dispositivo não é cadastrado
+                return res.status(201).json({
+                    sucesso: true,
+                    mensagem: "CRACHA CADASTRADO NO SISTEMA"
+                })
+            }
 
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ERRO, DISPOSITIVO NÃO VINCULADO")
+            if (tag.idUsuario == null) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que não existe usuario vinculado ao cracha
 
-                    return res.status(404).json({
-                        sucesso: false,
-                        mensagem: "ERRO, DISPOSITIVO NÃO VINCULADO"
-                    })
+                client.publish(`get-in-3td/dispositivos/${id}`, "false/NENHUM USUARIO VINCULADO AO CRACHA")
+
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "NENHUM USUARIO VINCULADO AO CRACHA"
+                })
+            }
+
+            const setor = await prisma.setores.findFirst({
+                where: {
+                    id: dispositivo.idSetor
                 }
+            })
 
-                const tag = await prisma.tag.findUnique({ // pega a tag pelo pela id do cracha 
-                    where: {
-                        codigoTag: cracha
-                    }
+            const log = {
+                idDispositivo: Number(id),
+                idUsuario: tag.idUsuario,
+                data: new Date().toISOString()
+            }
+
+
+            if (!setor) {
+                client.publish(`get-in-3td/dispositivos/${id}`, "false/SETOR NÃO VINCULADO")
+                return res.status(404).json({
+                    sucesso: false,
+                    mesagem: "SETOR NÃO VINCULADO"
+                })
+            }
+
+            if (setor.status == "Inativo") {
+                client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/SETOR INATIVO")
+                return res.status(200).json({
+                    sucesso: true,
+                    mesagem: "SETOR INATIVO"
+                })
+            }
+
+            if (setor.acesso == "Bloqueado") {
+                client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/SETOR BLOQUEADO")
+                return res.status(200).json({
+                    sucesso: true,
+                    mesagem: "SETOR BLOQUEADO"
+                })
+            }
+
+            if (setor.acesso == "Liberado") {
+                client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
+
+                await fetch(`https://get-in-ilp5.onrender.com/logs/disp`, {
+                    headers: { "Content-Type": "application/json" },
+                    method: "POST",
+                    body: JSON.stringify(log)
+                })
+
+                return res.status(200).json({
+                    sucesso: true,
+                    mesagem: "ACESSO PERMITIDO"
+                })
+            }
+
+
+
+            const funcionario = await prisma.funcionario.findFirst({
+                where: {
+                    id: tag.idUsuario,
+                    idSetor: dispositivo.idSetor
+                }
+            })
+
+
+            if (funcionario != null) {
+
+                await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                    headers: { "Content-Type": "application/json" },
+                    method: "POST",
+                    body: JSON.stringify(log)
                 })
 
 
-                if (!tag) { // CRACHA NÃO CADASTRADO NO SISTEMA 
-
-                    client.publish(`get-in-3td/dispositivos/${id}`, "true/CRACHA CADASTRADO NO SISTEMA")
-
-                    const newCracha = await prisma.tag.create({
-                        data: {
-                            codigoTag: cracha,
-                            idUsuario: null,
-                            status: "disponivel"
-                        }
-                    })
-
-                    return res.status(201).json({
-                        sucesso: true,
-                        mensagem: "CRACHA CADASTRADO NO SISTEMA"
-                    })
-                }
-
-                if (tag.idUsuario == null) { // verifica se o cracha tem um usuario associado, se não tiver, retorna que não existe usuario vinculado ao cracha
-
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/NENHUM USUARIO VINCULADO AO CRACHA")
-
-                    return res.status(404).json({
-                        sucesso: false,
-                        mensagem: "NENHUM USUARIO VINCULADO AO CRACHA"
-                    })
-                }
-
-
-                const funcionario = await prisma.funcionario.findFirst({
-                    where: {
-                        id: tag.idUsuario,
-                        idSetor: dispositivo.idSetor
-                    }
+                client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
+                return res.status(200).json({
+                    sucesso: true,
+                    mensagem: "ACESSO PERMITIDO"
                 })
+            }
 
 
-                const log = {
-                    idDispositivo: Number(id),
-                    idUsuario: tag.idUsuario,
-                    data: new Date().toISOString()
+            const requisicao = await prisma.view_central_requisicoes.findFirst({
+                where: {
+                    idDepartamento: dispositivo.idSetor,
+                    idUsuario: tag.idUsuario
                 }
+            })
 
+            if (requisicao != null) {
+                if (requisicao.status === "aprovado") {
 
-                if (funcionario != null) {
-
-                    await fetch("https://get-in-ilp5.onrender.com/logs/disp", {
+                    await fetch(`https://get-in-ilp5.onrender.com/logs/disp`, {
                         headers: { "Content-Type": "application/json" },
                         method: "POST",
                         body: JSON.stringify(log)
                     })
 
-
                     client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
-                    return res.json({
+
+
+                    return res.status(200).json({
                         sucesso: true,
                         mensagem: "ACESSO PERMITIDO"
                     })
                 }
-
-
-                const requisicao = await prisma.view_central_requisicoes.findFirst({
-                    where: {
-                        idDepartamento: dispositivo.idSetor,
-                        idUsuario: tag.idUsuario
-                    }
-                })
-
-                if (requisicao != null ) {
-                    if (requisicao.status === "aprovado") {
-
-                        await fetch(`https://get-in-ilp5.onrender.com/logs/disp`, {
-                            headers: { "Content-Type": "application/json" },
-                            method: "POST",
-                            body: JSON.stringify(log)
-                        })
-
-                        client.publish(`get-in-3td/dispositivos/${id}`, "true/ACESSO PERMITIDO")
-
-
-                        return res.status(200).json({
-                            sucesso: true,
-                            mensagem: "ACESSO PERMITIDO"
-                        })
-                    }
-                    if (requisicao.status === "recusado") {
-                        client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR")
-                        return res.status(200).json({
-                            sucesso: false,
-                            mensagem: "ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR"
-                        })
-                    }
-                    if (requisicao.status === "pendente") {
-                        client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
-                        return res.status(200).json({
-                            sucesso: false,
-                            mensagem: "AGUARDANDO VERIFICAÇÃO DO SUPERVISOR"
-                        })
-                    }
-                }
-                else {
-
-                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO NEGADO")
-                    return res.status(404).json({
+                if (requisicao.status === "recusado") {
+                    client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR")
+                    return res.status(200).json({
                         sucesso: false,
-                        mensagem: "ACESSO NEGADO"
+                        mensagem: "ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR"
                     })
                 }
+                if (requisicao.status === "pendente") {
+                    client.publish(`get-in-3td/dispositivos/${id}`, "aguarde/AGUARDANDO VERIFICAÇÃO DO SUPERVISOR")
+                    return res.status(200).json({
+                        sucesso: false,
+                        mensagem: "AGUARDANDO VERIFICAÇÃO DO SUPERVISOR"
+                    })
+                }
+            }
+            else {
+
+                client.publish(`get-in-3td/dispositivos/${id}`, "false/ACESSO NEGADO")
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: "ACESSO NEGADO"
+                })
+            }
         } catch (e) {
             return res.status(500).json({
                 sucesso: false,
