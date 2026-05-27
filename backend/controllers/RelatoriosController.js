@@ -16,6 +16,9 @@ const STATUS_COLOR = {
   alerta: "#ef4444",
 };
 
+const STATUS_RANK_ORDER = ["em_andamento", "finalizado", "alerta"];
+const EMPRESA_PLACEHOLDERS = new Set(["sem empresa", "equipe interna", "nao informado"]);
+
 const TIPO_COLOR = {
   Visitante: "#0f3a7d",
   Funcionario: "#34a853",
@@ -50,6 +53,16 @@ function normalizeText(value) {
 
 function pickFirst(...values) {
   return values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") || "";
+}
+
+function isEmpresaAtiva(empresa) {
+  const status = normalizeText(empresa?.status || "Ativa");
+  return status === "ativa" || status === "ativo";
+}
+
+function isEmpresaContabilizavel(value) {
+  const empresa = normalizeText(value);
+  return empresa && !EMPRESA_PLACEHOLDERS.has(empresa);
 }
 
 function formatDuration(ms) {
@@ -166,18 +179,89 @@ function getDateWhere(inicio, fim) {
   return Object.keys(dataDeEntrada).length > 0 ? { dataDeEntrada } : {};
 }
 
-function rankBy(registros, key) {
+function sortRanking(a, b) {
+  return b.visitas - a.visitas || a.nome.localeCompare(b.nome, "pt-BR");
+}
+
+function buildBaseRanking(items) {
   const map = new Map();
 
-  registros.forEach((registro) => {
-    const nome = registro[key] || "Nao informado";
-    const current = map.get(nome) || { nome, visitas: 0, alertas: 0 };
-    current.visitas += 1;
-    if (registro.status === "alerta") current.alertas += 1;
-    map.set(nome, current);
+  items.forEach((item) => {
+    const nome = pickFirst(item?.nome);
+    const key = normalizeText(nome);
+
+    if (!key || map.has(key)) return;
+    map.set(key, { nome, visitas: 0 });
   });
 
-  return [...map.values()].sort((a, b) => b.visitas - a.visitas || a.nome.localeCompare(b.nome)).slice(0, 8);
+  return map;
+}
+
+function rankSetores(registros, setoresAtivos) {
+  const map = buildBaseRanking(setoresAtivos);
+
+  registros.forEach((registro) => {
+    const key = normalizeText(registro.setor);
+    const current = map.get(key);
+
+    if (!current) return;
+    current.visitas += 1;
+  });
+
+  return [...map.values()].sort(sortRanking);
+}
+
+function rankEmpresas(registros, empresasAtivas) {
+  const map = buildBaseRanking(empresasAtivas);
+
+  registros.forEach((registro) => {
+    const key = normalizeText(registro.empresa);
+    const current = map.get(key);
+
+    if (!current) return;
+
+    const entrada = parseDate(registro.entrada);
+    const entradaTimestamp = entrada?.getTime() || 0;
+
+    current.visitas += 1;
+
+    if (entradaTimestamp && entradaTimestamp > (current.ultimoAcessoTimestamp || 0)) {
+      current.ultimoAcessoTimestamp = entradaTimestamp;
+      current.ultimoAcesso = entrada.toISOString();
+    }
+  });
+
+  return [...map.values()]
+    .sort((a, b) => {
+      const visitasDiff = b.visitas - a.visitas;
+      if (visitasDiff !== 0) return visitasDiff;
+
+      const ultimoAcessoDiff = (b.ultimoAcessoTimestamp || 0) - (a.ultimoAcessoTimestamp || 0);
+      if (ultimoAcessoDiff !== 0) return ultimoAcessoDiff;
+
+      return a.nome.localeCompare(b.nome, "pt-BR");
+    })
+    .map((item) => ({
+      nome: item.nome,
+      visitas: item.visitas,
+      ultimoAcesso: item.ultimoAcesso || null,
+    }));
+}
+
+function statusDistribution(registros) {
+  const map = new Map(
+    STATUS_RANK_ORDER.map((status) => [
+      status,
+      { name: STATUS_LABEL[status] || status, value: 0, color: STATUS_COLOR[status] || "#0f3a7d" },
+    ])
+  );
+
+  registros.forEach((registro) => {
+    const current = map.get(registro.status);
+    if (current) current.value += 1;
+  });
+
+  return STATUS_RANK_ORDER.map((status) => map.get(status));
 }
 
 function distribution(registros, key, labels = {}, colors = {}) {
@@ -237,11 +321,13 @@ function buildSeriesPorDia(registros, inicio, fim) {
   return [...map.values()].sort((a, b) => a.data.localeCompare(b.data));
 }
 
-function getResumo(registros) {
+function getResumo(registros, empresasAtivas = []) {
   const total = registros.length;
   const saidas = registros.filter((registro) => registro.saida).length;
   const dentro = registros.filter((registro) => ["em_andamento", "alerta"].includes(registro.status)).length;
   const alertas = registros.filter((registro) => registro.status === "alerta").length;
+  const empresasAtivasSet = new Set(empresasAtivas.map((empresa) => normalizeText(empresa.nome)).filter(Boolean));
+  const empresasAcessadas = new Set();
   const duracoesFinalizadas = registros
     .filter((registro) => registro.saida && registro.permanenciaMinutos > 0)
     .map((registro) => registro.permanenciaMinutos);
@@ -249,6 +335,15 @@ function getResumo(registros) {
     duracoesFinalizadas.length > 0
       ? Math.round(duracoesFinalizadas.reduce((sum, value) => sum + value, 0) / duracoesFinalizadas.length)
       : 0;
+
+  registros.forEach((registro) => {
+    const empresa = normalizeText(registro.empresa);
+
+    if (!isEmpresaContabilizavel(registro.empresa)) return;
+    if (empresasAtivasSet.size > 0 && !empresasAtivasSet.has(empresa)) return;
+
+    empresasAcessadas.add(empresa);
+  });
 
   return {
     totalAcessos: total,
@@ -259,6 +354,7 @@ function getResumo(registros) {
     tempoMedioMinutos: mediaMinutos,
     tempoMedio: mediaMinutos > 0 ? formatDuration(mediaMinutos * 60000) : "-",
     alertas,
+    empresasAcessadas: empresasAcessadas.size,
   };
 }
 
@@ -294,28 +390,40 @@ class RelatoriosController {
     try {
       const { inicio, fim, busca = "", setor = "", empresa = "", status = "todos" } = req.query || {};
       const normalizedStatus = STATUS_VALIDOS.has(String(status)) ? String(status) : "todos";
-      const logs = await prisma.log.findMany({
-        where: getDateWhere(inicio, fim),
-        include: {
-          usuario: {
-            include: {
-              empresas: true,
-              funcionarios: {
-                include: {
-                  setores_funcionarios_idSetorTosetores: true,
+      const [logs, setoresAtivos, empresasCatalogo] = await Promise.all([
+        prisma.log.findMany({
+          where: getDateWhere(inicio, fim),
+          include: {
+            usuario: {
+              include: {
+                empresas: true,
+                funcionarios: {
+                  include: {
+                    setores_funcionarios_idSetorTosetores: true,
+                  },
                 },
               },
             },
-          },
-          dispositivo: {
-            include: {
-              setores: true,
+            dispositivo: {
+              include: {
+                setores: true,
+              },
             },
           },
-        },
-        orderBy: [{ dataDeEntrada: "desc" }, { id: "desc" }],
-      });
+          orderBy: [{ dataDeEntrada: "desc" }, { id: "desc" }],
+        }),
+        prisma.setores.findMany({
+          where: { status: "Ativo" },
+          select: { nome: true },
+          orderBy: { nome: "asc" },
+        }),
+        prisma.empresas.findMany({
+          select: { nome: true, status: true },
+          orderBy: { nome: "asc" },
+        }),
+      ]);
 
+      const empresasAtivas = empresasCatalogo.filter(isEmpresaAtiva);
       const normalized = logs.map((log) => normalizeLog(log));
       const registros = normalized.filter((registro) =>
         matchesFilter(registro, {
@@ -330,15 +438,15 @@ class RelatoriosController {
       return res.status(200).json({
         sucesso: true,
         data: {
-          resumo: getResumo(registros),
+          resumo: getResumo(registros, empresasAtivas),
           series: {
             porDia: buildSeriesPorDia(registros, inicio, fim),
             porHora: buildSeriesPorHora(registros),
           },
           rankings: {
-            setores: rankBy(registros, "setor"),
-            empresas: rankBy(registros, "empresa"),
-            status: distribution(registros, "status", STATUS_LABEL, STATUS_COLOR),
+            setores: rankSetores(registros, setoresAtivos),
+            empresas: rankEmpresas(registros, empresasAtivas),
+            status: statusDistribution(registros),
             tipos: distribution(registros, "tipo", {}, TIPO_COLOR),
           },
           registros,
