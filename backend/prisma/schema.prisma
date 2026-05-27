@@ -20,6 +20,7 @@ model Usuario {
   logs                 Log[]
   requisicoesDeAcessos RequisicaoDeAcesso[]
   requisicoesDeVisitas RequisicaoDeVisita[]
+  crachas              Cracha[]
   tags                 Tag[]
   departamentos        Departamento?        @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento_fkey")
   empresas             empresas?            @relation(fields: [idEmpresa], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "empresa")
@@ -72,6 +73,21 @@ model Tag {
   usuario         Usuario?      @relation(fields: [idUsuario], references: [id], onDelete: Restrict)
 
   @@map("tags")
+}
+
+model Cracha {
+  id                 Int          @id @default(autoincrement())
+  idUsuario          Int?
+  status             StatusCracha @default(disponivel)
+  codigoTag          String       @unique @db.VarChar(100)
+  temporario         Boolean      @default(false)
+  validade           DateTime?
+  dataDeCriacao      DateTime     @default(now())
+  dataDeAtualizacao  DateTime     @default(now()) @updatedAt
+  dataDeDevolucao    DateTime?    @db.Timestamp(6)
+  usuario            Usuario?     @relation(fields: [idUsuario], references: [id], onDelete: Restrict)
+
+  @@map("crachas")
 }
 
 model RequisicaoDeAcesso {
