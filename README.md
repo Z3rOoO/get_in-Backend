@@ -1161,8 +1161,250 @@ Endpoints que retornam dados consolidados de múltiplas tabelas para visualizaç
 | GET | `/views/requisicoes` | Sim | Obter requisições de acesso e visita consolidadas |
 | GET | `/views/logs` | Sim | Obter logs detalhados de entrada e saída |
 | GET | `/views/usuarios` | Sim | Obter usuários detalhados com informações de funcionário e departamento |
+| GET | `/views/usuarios/:id` | Sim | Obter detalhes de um usuário específico via view consolidada |
 | GET | `/views/tags` | Sim | Obter tags detalhadas com informações de usuário e crachá |
 | GET | `/views/gestores` | Sim | Obter lista de gestores |
+
+#### 📌 GET `/views/requisicoes` - Requisições Consolidadas
+
+**Descrição:** Retorna uma lista unificada de requisições de acesso interno e visitas externas.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+fetch("http://localhost:3000/views/requisicoes", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "id": 1,
+      "idUsuario": 10,
+      "idDepartamento": 2,
+      "status": "aprovado",
+      "dataDaRequisicao": "2026-05-20T14:30:00.000Z",
+      "tipo_requisicao": "Acesso Interno",
+      "empresa_visitante": null,
+      "validade_visita": null
+    },
+    {
+      "id": 5,
+      "idUsuario": 15,
+      "idDepartamento": 3,
+      "status": "pendente",
+      "dataDaRequisicao": "2026-05-21T09:00:00.000Z",
+      "tipo_requisicao": "Visita Externa",
+      "empresa_visitante": "Tech Solutions",
+      "validade_visita": "2026-05-21T18:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/views/logs` - Logs Detalhados
+
+**Descrição:** Retorna o histórico de acessos com nomes de usuários, locais e departamentos.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+fetch("http://localhost:3000/views/logs", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "log_id": 101,
+      "usuario_nome": "João Silva",
+      "usuario_cpf": "123.456.789-00",
+      "local_dispositivo": "Portaria Principal",
+      "dataDeEntrada": "2026-05-28T08:00:00.000Z",
+      "dataDeSaida": "2026-05-28T17:00:00.000Z",
+      "departamento_usuario": "TI"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/views/usuarios` - Usuários Detalhados
+
+**Descrição:** Retorna a lista de usuários com perfil completo, incluindo cargo, departamento e URL da foto de perfil.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+fetch("http://localhost:3000/views/usuarios", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "usuario_id": 1,
+      "usuario_nome": "Admin Manus",
+      "email": "admin@manus.im",
+      "cpf": "000.000.000-00",
+      "celular": "11999999999",
+      "cargo": "adm",
+      "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+      "foto_perfil": "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios/avatar_1.png",
+      "departamento_nome": "Diretoria",
+      "dataDeCriacao": "2026-01-01T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/views/usuarios/:id` - Detalhe de Usuário via View
+
+**Descrição:** Retorna os dados consolidados de um único usuário pelo seu ID.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+const userId = 1;
+fetch(`http://localhost:3000/views/usuarios/${userId}`, {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": {
+    "usuario_id": 1,
+    "usuario_nome": "Admin Manus",
+    "email": "admin@manus.im",
+    "cpf": "000.000.000-00",
+    "celular": "11999999999",
+    "cargo": "adm",
+    "dataDeNascimento": "1990-01-01T00:00:00.000Z",
+    "foto_perfil": "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios/avatar_1.png",
+    "departamento_nome": "Diretoria",
+    "dataDeCriacao": "2026-01-01T10:00:00.000Z"
+  }
+}
+```
+
+#### 📌 GET `/views/tags` - Tags Detalhadas
+
+**Descrição:** Retorna informações sobre tags RFID, incluindo o usuário associado, status do crachá e departamento.
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+fetch("http://localhost:3000/views/tags", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "codigoTag": "A1B2C3D4",
+      "usuario_id": 10,
+      "usuario_nome": "Carlos Oliveira",
+      "status_cracha": "emUso",
+      "temporario": false,
+      "validade_tag": null,
+      "departamento_vinculado": "Produção"
+    }
+  ]
+}
+```
+
+#### 📌 GET `/views/gestores` - Lista de Gestores
+
+**Descrição:** Retorna todos os funcionários que possuem cargo de gestor (`ger`).
+
+**Exemplo de `fetch`:**
+
+```javascript
+const token = localStorage.getItem("jwtToken");
+fetch("http://localhost:3000/views/gestores", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Erro:", error));
+```
+
+**Resposta Esperada (200 OK):**
+
+```json
+{
+  "sucesso": true,
+  "data": [
+    {
+      "id": 5,
+      "idUsuario": 10,
+      "gestor": "Carlos Oliveira"
+    }
+  ]
+}
+```
+
 
 ---
 
