@@ -8,6 +8,8 @@ router.get("/", Auth, UserController.Read);
 router.get("/me/profile", Auth, UserController.ReadMyProfile);
 router.put("/me/profile", Auth, UserController.UpdateMyProfile);
 router.put("/me/password", Auth, UserController.UpdateMyPassword);
+router.get("/me/preferences", Auth, UserController.ReadMyPreferences);
+router.put("/me/preferences", Auth, UserController.UpdateMyPreferences);
 router.get("/name/:nome", Auth, UserController.ReadName);
 router.get("/cpf/:cpf", Auth, UserController.ReadCpf);
 router.get("/:id", Auth, UserController.ReadId);

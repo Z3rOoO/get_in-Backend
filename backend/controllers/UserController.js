@@ -107,6 +107,34 @@ function getPrismaErrorMessage(error) {
     return error.message;
 }
 
+const PREFERENCIAS_PADRAO = {
+    tema: "dark",
+    densidade: "confortavel",
+    menuLateral: "expandido",
+    reduzirMovimento: false,
+    confirmarAcoesCriticas: true
+};
+
+function normalizeChoice(value, allowedValues, fallback) {
+    return allowedValues.includes(value) ? value : fallback;
+}
+
+function normalizeBoolean(value, fallback) {
+    return typeof value === "boolean" ? value : fallback;
+}
+
+function normalizePreferences(preferencias = {}) {
+    const payload = preferencias && typeof preferencias === "object" ? preferencias : {};
+
+    return {
+        tema: normalizeChoice(payload.tema, ["dark", "light", "system"], PREFERENCIAS_PADRAO.tema),
+        densidade: normalizeChoice(payload.densidade, ["confortavel", "compacta"], PREFERENCIAS_PADRAO.densidade),
+        menuLateral: normalizeChoice(payload.menuLateral, ["expandido", "recolhido"], PREFERENCIAS_PADRAO.menuLateral),
+        reduzirMovimento: normalizeBoolean(payload.reduzirMovimento, PREFERENCIAS_PADRAO.reduzirMovimento),
+        confirmarAcoesCriticas: normalizeBoolean(payload.confirmarAcoesCriticas, PREFERENCIAS_PADRAO.confirmarAcoesCriticas)
+    };
+}
+
 class UserController {
     static async Read(req, res) {
         try {
@@ -443,6 +471,59 @@ class UserController {
             return res.status(500).json({
                 sucesso: false,
                 mensagem: "Erro ao atualizar senha",
+                erro: e.message
+            });
+        }
+    }
+
+    static async ReadMyPreferences(req, res) {
+        try {
+            const registro = await prisma.preferenciasUsuario.findUnique({
+                where: { idUsuario: req.user.id }
+            });
+
+            res.set("Cache-Control", "no-store");
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Preferencias carregadas com sucesso",
+                data: normalizePreferences(registro?.valor)
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar preferencias",
+                erro: e.message
+            });
+        }
+    }
+
+    static async UpdateMyPreferences(req, res) {
+        try {
+            const preferencias = normalizePreferences(req.body?.preferencias || req.body);
+
+            const registro = await prisma.preferenciasUsuario.upsert({
+                where: { idUsuario: req.user.id },
+                create: {
+                    idUsuario: req.user.id,
+                    valor: preferencias
+                },
+                update: {
+                    valor: preferencias
+                }
+            });
+
+            res.set("Cache-Control", "no-store");
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Preferencias salvas com sucesso",
+                data: normalizePreferences(registro.valor)
+            });
+        } catch (e) {
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao salvar preferencias",
                 erro: e.message
             });
         }

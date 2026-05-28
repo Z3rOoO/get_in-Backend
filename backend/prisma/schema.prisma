@@ -22,10 +22,22 @@ model Usuario {
   requisicoesDeVisitas RequisicaoDeVisita[]
   crachas              Cracha[]
   tags                 Tag[]
+  preferencias         PreferenciasUsuario?
   departamentos        Departamento?        @relation(fields: [idDep], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "departamento_fkey")
   empresas             empresas?            @relation(fields: [idEmpresa], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "empresa")
 
   @@map("usuarios")
+}
+
+model PreferenciasUsuario {
+  id                Int      @id @default(autoincrement())
+  idUsuario         Int      @unique
+  valor             Json
+  dataDeCriacao     DateTime @default(now())
+  dataDeAtualizacao DateTime @default(now()) @updatedAt
+  usuario           Usuario  @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("preferencias_usuarios")
 }
 
 model Departamento {
