@@ -109,6 +109,7 @@ function getPrismaErrorMessage(error) {
 
 const PREFERENCIAS_PADRAO = {
     tema: "dark",
+    idioma: "pt-BR",
     densidade: "confortavel",
     menuLateral: "expandido",
     reduzirMovimento: false,
@@ -128,6 +129,7 @@ function normalizePreferences(preferencias = {}) {
 
     return {
         tema: normalizeChoice(payload.tema, ["dark", "light", "system"], PREFERENCIAS_PADRAO.tema),
+        idioma: normalizeChoice(payload.idioma, ["pt-BR", "en-US", "es-ES"], PREFERENCIAS_PADRAO.idioma),
         densidade: normalizeChoice(payload.densidade, ["confortavel", "compacta"], PREFERENCIAS_PADRAO.densidade),
         menuLateral: normalizeChoice(payload.menuLateral, ["expandido", "recolhido"], PREFERENCIAS_PADRAO.menuLateral),
         reduzirMovimento: normalizeBoolean(payload.reduzirMovimento, PREFERENCIAS_PADRAO.reduzirMovimento),
