@@ -16,6 +16,19 @@ export const includeCrachaDetalhado = {
     include: {
       departamentos: true,
       empresas: true,
+      funcionarios: {
+        include: {
+          setores_funcionarios_idSetorTosetores: true,
+        },
+        orderBy: { id: "asc" },
+      },
+      requisicoesDeVisitas: {
+        include: {
+          setores: true,
+        },
+        orderBy: { dataDaRequisicao: "desc" },
+        take: 1,
+      },
     },
   },
   tags: {

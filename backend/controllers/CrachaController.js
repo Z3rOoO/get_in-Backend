@@ -110,8 +110,7 @@ class CrachaController {
       const crachas = await prisma.cracha.findMany({
         include: includeCrachaDetalhado,
         orderBy: [
-          { dataDeCriacao: "desc" },
-          { id: "desc" },
+          { id: "asc" },
         ],
       });
 
@@ -279,8 +278,7 @@ class CrachaController {
         where: { status },
         include: includeCrachaDetalhado,
         orderBy: [
-          { dataDeCriacao: "desc" },
-          { id: "desc" },
+          { id: "asc" },
         ],
       });
 
