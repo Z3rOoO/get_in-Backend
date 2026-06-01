@@ -81,18 +81,19 @@ class ViewController {
             const query = `
                 SELECT
                     t."codigoTag",
+                    t."fisica",
                     u.id AS usuario_id,
                     u.nome AS usuario_nome,
                     c.status AS status_cracha,
                     t.temporario,
                     t.validade AS validade_tag,
-                    d.nome AS departamento_vinculado
+                    s.nome AS departamento_vinculado
                 FROM
                     tags t
-                    JOIN usuarios u ON t."idUsuario" = u.id
-                    JOIN crachas c ON t."idCracha" = c.id
+                    LEFT JOIN usuarios u ON t."idUsuario" = u.id
+                    LEFT JOIN crachas c ON t."idCracha" = c.id
                     LEFT JOIN funcionarios f ON u.id = f."idUsuario"
-                    LEFT JOIN departamentos d ON f."idDepartamento" = d.id
+                    LEFT JOIN setores s ON f."idSetor" = s.id
             `;
             const data = await prisma.$queryRawUnsafe(query);
             return res.status(200).json({ sucesso: true, data });

@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { comparePassword, hashPassword } from "../config/utils.js";
+import { ensureUserCracha } from "../services/crachaService.js";
 
 const AVATAR_PUBLIC_URL = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
 
@@ -259,7 +260,15 @@ class UserController {
                 idEmpresa: parseId(idEmpresa)
             };
 
-            const result = await prisma.usuario.create({ data });
+            const result = await prisma.$transaction(async (tx) => {
+                const usuario = await tx.usuario.create({ data });
+                const cracha = await ensureUserCracha(usuario.id, tx);
+
+                return {
+                    ...usuario,
+                    crachas: cracha ? [cracha] : []
+                };
+            });
 
             return res.status(201).json({
                 sucesso: true,

@@ -76,12 +76,15 @@ model Funcionario {
 model Tag {
   id              Int           @id @default(autoincrement())
   idUsuario       Int?
+  idCracha        Int?
   status          StatusCracha?
   codigoTag       String        @unique @db.VarChar(100)
   temporario      Boolean       @default(false)
+  fisica          Boolean       @default(false)
   validade        DateTime?
   dataDeCriacao   DateTime      @default(now())
   dataDeDevolucao DateTime?     @db.Timestamp(6)
+  cracha          Cracha?       @relation(fields: [idCracha], references: [id], onDelete: SetNull)
   usuario         Usuario?      @relation(fields: [idUsuario], references: [id], onDelete: Restrict)
 
   @@map("tags")
@@ -97,6 +100,7 @@ model Cracha {
   dataDeCriacao      DateTime     @default(now())
   dataDeAtualizacao  DateTime     @default(now()) @updatedAt
   dataDeDevolucao    DateTime?    @db.Timestamp(6)
+  tags               Tag[]
   usuario            Usuario?     @relation(fields: [idUsuario], references: [id], onDelete: Restrict)
 
   @@map("crachas")

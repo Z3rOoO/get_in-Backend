@@ -8,11 +8,14 @@ function parseId(value) {
 function buildTagData(body = {}) {
     const data = {};
     const idUsuario = parseId(body.idUsuario);
+    const idCracha = parseId(body.idCracha);
 
     if (body.idUsuario !== undefined) data.idUsuario = idUsuario;
+    if (body.idCracha !== undefined) data.idCracha = idCracha;
     if (body.status !== undefined) data.status = body.status || null;
     if (body.codigoTag !== undefined) data.codigoTag = String(body.codigoTag || "").trim();
     if (body.temporario !== undefined) data.temporario = Boolean(body.temporario);
+    if (body.fisica !== undefined) data.fisica = Boolean(body.fisica);
     if (body.validade !== undefined) data.validade = body.validade ? new Date(body.validade) : null;
 
     return data;
@@ -22,14 +25,17 @@ class TagsController {
     static async Read(req, res) {
         try {
             const tags = await prisma.tag.findMany({
+                where: req.query?.fisica === "true" ? { fisica: true } : undefined,
                 include: {
                     usuario: {
                         include: {
                             departamentos: true
                         }
-                    }
+                    },
+                    cracha: true
                 },
                 orderBy: [
+                    { fisica: "desc" },
                     { dataDeCriacao: "desc" },
                     { id: "desc" }
                 ]
@@ -52,17 +58,15 @@ class TagsController {
     static async ReadLatest(req, res) {
         try {
             const tag = await prisma.tag.findFirst({
-                where: { idUsuario: null },
-                include: {
-                    usuario: true
+                where: {
+                    fisica: true,
+                    idUsuario: null,
+                    idCracha: null,
+                    status: "disponivel"
                 },
-                orderBy: [
-                    { dataDeCriacao: "desc" },
-                    { id: "desc" }
-                ]
-            }) || await prisma.tag.findFirst({
                 include: {
-                    usuario: true
+                    usuario: true,
+                    cracha: true
                 },
                 orderBy: [
                     { dataDeCriacao: "desc" },
@@ -88,7 +92,11 @@ class TagsController {
         try {
             const { codigoTag } = req.params;
             const tag = await prisma.tag.findUnique({
-                where: { codigoTag }
+                where: { codigoTag },
+                include: {
+                    usuario: true,
+                    cracha: true
+                }
             });
 
             if (!tag) {
@@ -148,7 +156,11 @@ class TagsController {
                 where: {
                     id: Number(id)
                 },
-                data
+                data,
+                include: {
+                    usuario: true,
+                    cracha: true
+                }
             });
 
             return res.status(200).json({
@@ -179,7 +191,14 @@ class TagsController {
 
             const result = await prisma.tag.update({
                 where: { codigoTag },
-                data: { idUsuario }
+                data: {
+                    idUsuario,
+                    status: "emUso"
+                },
+                include: {
+                    usuario: true,
+                    cracha: true
+                }
             });
 
             return res.status(200).json({
@@ -226,6 +245,10 @@ class TagsController {
             const tag = await prisma.tag.findUnique({
                 where: {
                     id: Number(id)
+                },
+                include: {
+                    usuario: true,
+                    cracha: true
                 }
             });
 

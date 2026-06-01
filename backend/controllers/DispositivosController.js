@@ -220,7 +220,9 @@ class DispositivosController {
                     data: {
                         codigoTag: cracha,
                         idUsuario: null,
-                        status: "disponivel"
+                        idCracha: null,
+                        status: "disponivel",
+                        fisica: true
                     }
                 })
 
@@ -296,7 +298,7 @@ class DispositivosController {
 
             const funcionario = await prisma.funcionario.findFirst({
                 where: {
-                    id: tag.idUsuario,
+                    idUsuario: tag.idUsuario,
                     idSetor: dispositivo.idSetor
                 }
             })

@@ -1,9 +1,11 @@
 import { prisma } from "../config/prisma.js";
+import { includeCrachaDetalhado } from "../services/crachaService.js";
 
-const STATUS_VALIDOS = new Set(["disponivel", "emUso"]);
+const STATUS_VALIDOS = new Set(["disponivel", "emUso", "perdido"]);
 const STATUS_ALIAS = {
   d: "disponivel",
   e: "emUso",
+  p: "perdido",
 };
 
 function parseId(value) {
@@ -64,21 +66,30 @@ function buildCrachaData(body = {}, { partial = false } = {}) {
   return data;
 }
 
-const includeUsuario = {
-  usuario: {
-    include: {
-      departamentos: true,
-    },
-  },
-};
-
 class CrachaController {
   static async create(req, res) {
     try {
       const data = buildCrachaData(req.body);
-      const result = await prisma.cracha.create({
-        data,
-        include: includeUsuario,
+
+      const result = await prisma.$transaction(async (tx) => {
+        const cracha = await tx.cracha.create({ data });
+
+        await tx.tag.create({
+          data: {
+            idUsuario: cracha.idUsuario,
+            idCracha: cracha.id,
+            codigoTag: cracha.codigoTag,
+            status: cracha.status,
+            temporario: cracha.temporario,
+            fisica: false,
+            validade: cracha.validade,
+          },
+        });
+
+        return tx.cracha.findUnique({
+          where: { id: cracha.id },
+          include: includeCrachaDetalhado,
+        });
       });
 
       return res.status(201).json({
@@ -97,7 +108,7 @@ class CrachaController {
   static async read(req, res) {
     try {
       const crachas = await prisma.cracha.findMany({
-        include: includeUsuario,
+        include: includeCrachaDetalhado,
         orderBy: [
           { dataDeCriacao: "desc" },
           { id: "desc" },
@@ -130,10 +141,33 @@ class CrachaController {
         return res.status(400).json({ sucesso: false, mensagem: "Nenhum campo para atualizar" });
       }
 
-      const result = await prisma.cracha.update({
-        where: { id },
-        data,
-        include: includeUsuario,
+      const result = await prisma.$transaction(async (tx) => {
+        const cracha = await tx.cracha.update({
+          where: { id },
+          data,
+        });
+
+        const tagData = {};
+        if (data.idUsuario !== undefined) tagData.idUsuario = data.idUsuario;
+        if (data.status !== undefined) tagData.status = data.status;
+        if (data.temporario !== undefined) tagData.temporario = data.temporario;
+        if (data.validade !== undefined) tagData.validade = data.validade;
+        if (data.dataDeDevolucao !== undefined) tagData.dataDeDevolucao = data.dataDeDevolucao;
+
+        if (Object.keys(tagData).length > 0) {
+          await tx.tag.updateMany({
+            where: {
+              idCracha: id,
+              fisica: false,
+            },
+            data: tagData,
+          });
+        }
+
+        return tx.cracha.findUnique({
+          where: { id: cracha.id },
+          include: includeCrachaDetalhado,
+        });
       });
 
       return res.status(200).json({
@@ -156,8 +190,32 @@ class CrachaController {
         return res.status(400).json({ sucesso: false, mensagem: "Id do cracha invalido" });
       }
 
-      const result = await prisma.cracha.delete({
-        where: { id },
+      const result = await prisma.$transaction(async (tx) => {
+        await tx.tag.deleteMany({
+          where: {
+            idCracha: id,
+            fisica: false,
+          },
+        });
+
+        await tx.tag.updateMany({
+          where: {
+            idCracha: id,
+            fisica: true,
+          },
+          data: {
+            idUsuario: null,
+            idCracha: null,
+            status: "disponivel",
+            temporario: false,
+            validade: null,
+            dataDeDevolucao: new Date(),
+          },
+        });
+
+        return tx.cracha.delete({
+          where: { id },
+        });
       });
 
       return res.status(200).json({
@@ -183,7 +241,7 @@ class CrachaController {
 
       const result = await prisma.cracha.findUnique({
         where: { id },
-        include: includeUsuario,
+        include: includeCrachaDetalhado,
       });
 
       if (!result) {
@@ -219,7 +277,7 @@ class CrachaController {
 
       const result = await prisma.cracha.findMany({
         where: { status },
-        include: includeUsuario,
+        include: includeCrachaDetalhado,
         orderBy: [
           { dataDeCriacao: "desc" },
           { id: "desc" },
@@ -236,6 +294,110 @@ class CrachaController {
         sucesso: false,
         mensagem: "Erro ao encontrar os crachas",
         erro: e.message,
+      });
+    }
+  }
+
+  static async assignPhysicalTag(req, res) {
+    try {
+      const id = parseId(req.params.id);
+      const tagId = parseId(req.params.tagId || req.body?.idTag);
+
+      if (!id || !tagId) {
+        return res.status(400).json({
+          sucesso: false,
+          mensagem: "Id do cracha e id da TAG sao obrigatorios",
+        });
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const cracha = await tx.cracha.findUnique({ where: { id } });
+        if (!cracha) {
+          throw new Error("Cracha nao encontrado");
+        }
+
+        const tag = await tx.tag.findUnique({ where: { id: tagId } });
+        if (!tag || !tag.fisica) {
+          throw new Error("TAG fisica nao encontrada");
+        }
+
+        if (tag.idUsuario || tag.idCracha) {
+          throw new Error("TAG fisica ja esta vinculada");
+        }
+
+        await tx.tag.update({
+          where: { id: tagId },
+          data: {
+            idUsuario: cracha.idUsuario,
+            idCracha: cracha.id,
+            status: "emUso",
+            temporario: false,
+            validade: null,
+            dataDeDevolucao: null,
+          },
+        });
+
+        await tx.cracha.update({
+          where: { id },
+          data: { status: "emUso" },
+        });
+
+        await tx.tag.updateMany({
+          where: { idCracha: id, fisica: false },
+          data: { status: "emUso" },
+        });
+
+        return tx.cracha.findUnique({
+          where: { id },
+          include: includeCrachaDetalhado,
+        });
+      });
+
+      return res.status(200).json({
+        sucesso: true,
+        mensagem: "TAG fisica vinculada ao cracha com sucesso",
+        data: result,
+      });
+    } catch (e) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: e.message || "Erro ao vincular TAG fisica",
+      });
+    }
+  }
+
+  static async releasePhysicalTag(req, res) {
+    try {
+      const tagId = parseId(req.params.tagId);
+
+      if (!tagId) {
+        return res.status(400).json({
+          sucesso: false,
+          mensagem: "Id da TAG fisica invalido",
+        });
+      }
+
+      const result = await prisma.tag.update({
+        where: { id: tagId },
+        data: {
+          idUsuario: null,
+          idCracha: null,
+          status: "disponivel",
+          temporario: false,
+          validade: null,
+          dataDeDevolucao: new Date(),
+        },
+      });
+
+      return res.status(200).json({
+        sucesso: true,
+        mensagem: "TAG fisica liberada com sucesso",
+        data: result,
+      });
+    } catch (e) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: e.message || "Erro ao liberar TAG fisica",
       });
     }
   }

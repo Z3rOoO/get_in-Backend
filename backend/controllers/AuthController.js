@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { prisma } from '../config/prisma.js';
 import { comparePassword, hashPassword } from '../config/utils.js';
+import { ensureUserCracha } from '../services/crachaService.js';
 
 dotenv.config()
 
@@ -118,6 +119,12 @@ class AuthController {
             })
             if (usuarioExistente) {
                 idUsuario = usuarioExistente.id
+                datauser = {
+                    nome: usuarioExistente.nome,
+                    cpf: usuarioExistente.cpf,
+                    celular: usuarioExistente.celular,
+                    email: usuarioExistente.email
+                }
 
             } else {
                 // cria usuário
@@ -159,13 +166,22 @@ class AuthController {
                     senhaHash: senhaHash
                 };
 
-                const resultfunc = await prisma.funcionario.create({
-                    data: newFunc
+                const result = await prisma.$transaction(async (tx) => {
+                    const funcionario = await tx.funcionario.create({
+                        data: newFunc
+                    })
+                    const cracha = await ensureUserCracha(idUsuario, tx)
+
+                    return { funcionario, cracha }
                 })
                 return res.status(201).json({
                     sucesso: true,
                     mensagem: "Usuário e funcionário criados com sucesso",
-                    data: { usuario: { id: idUsuario, ...datauser }, funcionario: { id: resultfunc.id, ...newFunc } }
+                    data: {
+                        usuario: { id: idUsuario, ...datauser },
+                        funcionario: { id: result.funcionario.id, ...newFunc },
+                        cracha: result.cracha
+                    }
                 });
 
             } catch (e) {
