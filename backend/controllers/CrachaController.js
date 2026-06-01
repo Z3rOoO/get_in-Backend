@@ -141,26 +141,68 @@ class CrachaController {
       }
 
       const result = await prisma.$transaction(async (tx) => {
-        const cracha = await tx.cracha.update({
+        const crachaAtual = await tx.cracha.findUnique({
           where: { id },
-          data,
         });
 
-        const tagData = {};
-        if (data.idUsuario !== undefined) tagData.idUsuario = data.idUsuario;
-        if (data.status !== undefined) tagData.status = data.status;
-        if (data.temporario !== undefined) tagData.temporario = data.temporario;
-        if (data.validade !== undefined) tagData.validade = data.validade;
-        if (data.dataDeDevolucao !== undefined) tagData.dataDeDevolucao = data.dataDeDevolucao;
+        if (!crachaAtual) {
+          throw new Error("Cracha nao encontrado");
+        }
 
-        if (Object.keys(tagData).length > 0) {
+        const updateData = { ...data };
+        const agora = new Date();
+
+        if (data.status === "disponivel") {
+          updateData.idUsuario = null;
+          updateData.status = "disponivel";
+          updateData.temporario = false;
+          updateData.validade = null;
+          updateData.dataDeDevolucao = agora;
+        }
+
+        if (data.status === "emUso") {
+          const idUsuarioFinal = data.idUsuario !== undefined ? data.idUsuario : crachaAtual.idUsuario;
+
+          if (!idUsuarioFinal) {
+            throw new Error("Nao e possivel voltar um cracha sem usuario para em uso");
+          }
+
+          updateData.status = "emUso";
+          updateData.idUsuario = idUsuarioFinal;
+          updateData.dataDeDevolucao = null;
+        }
+
+        const cracha = await tx.cracha.update({
+          where: { id },
+          data: updateData,
+        });
+
+        if (data.status === "disponivel") {
           await tx.tag.updateMany({
-            where: {
-              idCracha: id,
-              fisica: false,
+            where: { idCracha: id },
+            data: {
+              idUsuario: null,
+              idCracha: null,
+              status: "disponivel",
+              temporario: false,
+              validade: null,
+              dataDeDevolucao: agora,
             },
-            data: tagData,
           });
+        } else {
+          const tagData = {};
+          if (updateData.idUsuario !== undefined) tagData.idUsuario = updateData.idUsuario;
+          if (updateData.status !== undefined) tagData.status = updateData.status;
+          if (updateData.temporario !== undefined) tagData.temporario = updateData.temporario;
+          if (updateData.validade !== undefined) tagData.validade = updateData.validade;
+          if (updateData.dataDeDevolucao !== undefined) tagData.dataDeDevolucao = updateData.dataDeDevolucao;
+
+          if (Object.keys(tagData).length > 0) {
+            await tx.tag.updateMany({
+              where: { idCracha: id },
+              data: tagData,
+            });
+          }
         }
 
         return tx.cracha.findUnique({
