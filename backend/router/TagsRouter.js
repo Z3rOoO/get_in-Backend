@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get("/", Auth, TagsController.Read);
 router.get("/latest", Auth, TagsController.ReadLatest);
+router.get("/disponiveis", Auth, TagsController.ReadAvailable);
+router.put("/virtual/assign", Auth, TagsController.AssignVirtual);
 router.get("/code/:codigoTag", Auth, TagsController.ReadByCode);
 router.put("/code/:codigoTag/assign", Auth, TagsController.AssignByCode);
 router.get("/:id", Auth, TagsController.ReadById);
