@@ -186,11 +186,21 @@ class LogsController {
         try {
 
             const { idDispositivo, idUsuario, data } = req.body; // puxar as informações do dispositivo
+            const dispositivoId = Number(idDispositivo);
+            const usuarioId = Number(idUsuario);
+            const dataRegistro = data ? new Date(data) : new Date();
 
-            const logs = await prisma.Log.findFirst({ // verifica se tem um log com essas informações 
+            if (!Number.isInteger(dispositivoId) || !Number.isInteger(usuarioId)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "idDispositivo e idUsuario são obrigatórios"
+                })
+            }
+
+            const logs = await prisma.log.findFirst({ // verifica se tem um log com essas informações
                 where: {
-                    idDispositivo: idDispositivo,
-                    idUsuario: idUsuario
+                    idDispositivo: dispositivoId,
+                    idUsuario: usuarioId
                 }, orderBy: {
                     id: "desc"
                 }
@@ -201,9 +211,9 @@ class LogsController {
 
                 const log = await prisma.log.create({ // cria um novo log com data de entrada
                     data: {
-                        idDispositivo: idDispositivo,
-                        idUsuario: idUsuario,
-                        dataDeEntrada: data,
+                        idDispositivo: dispositivoId,
+                        idUsuario: usuarioId,
+                        dataDeEntrada: dataRegistro,
                         dataDeSaida: null
                     }
                 })
@@ -218,9 +228,9 @@ class LogsController {
             if (logs.dataDeEntrada != null && logs.dataDeSaida != null) { // cria um novo log
                 const log = await prisma.log.create({
                     data: {
-                        idDispositivo: idDispositivo,
-                        idUsuario: idUsuario,
-                        dataDeEntrada: data,
+                        idDispositivo: dispositivoId,
+                        idUsuario: usuarioId,
+                        dataDeEntrada: dataRegistro,
                         dataDeSaida: null
                     }
                 })
@@ -238,7 +248,7 @@ class LogsController {
                     where: {
                         id: logs.id
                     }, data: {
-                        dataDeSaida: data
+                        dataDeSaida: dataRegistro
                     }
                 })
 

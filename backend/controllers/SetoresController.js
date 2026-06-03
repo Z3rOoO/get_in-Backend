@@ -80,6 +80,31 @@ async function buildSetorData(body = {}, { partial = false } = {}) {
   return data;
 }
 
+async function contarUsuariosDoSetor(idSetor) {
+  const [funcionarios, visitantes] = await Promise.all([
+    prisma.funcionario.findMany({
+      where: { idSetor },
+      select: { idUsuario: true },
+    }),
+    prisma.requisicaoDeVisita.findMany({
+      where: { idSetor },
+      distinct: ["idUsuario"],
+      select: { idUsuario: true },
+    }),
+  ]);
+
+  const usuarios = new Set([
+    ...funcionarios.map((item) => item.idUsuario).filter(Boolean),
+    ...visitantes.map((item) => item.idUsuario).filter(Boolean),
+  ]);
+
+  return {
+    usuariosCadastrados: usuarios.size,
+    funcionariosCadastrados: funcionarios.length,
+    visitantesCadastrados: visitantes.length,
+  };
+}
+
 class SetoresController {
   static async read(req, res) {
     try {
@@ -92,13 +117,18 @@ class SetoresController {
         orderBy: { nome: "asc" },
       });
 
+      const data = await Promise.all(
+        setores.map(async (setor) => ({
+          ...setor,
+          responsavel: setor.funcionarios_setores_idGestorTofuncionarios?.usuario?.nome || null,
+          ...(await contarUsuariosDoSetor(setor.id)),
+        }))
+      );
+
       return res.status(200).json({
         sucesso: true,
         mensagem: "Setores listados com sucesso",
-        data: setores.map((setor) => ({
-          ...setor,
-          responsavel: setor.funcionarios_setores_idGestorTofuncionarios?.usuario?.nome || null,
-        })),
+        data,
       });
     } catch (e) {
       return res.status(500).json({

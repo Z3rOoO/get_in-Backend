@@ -211,27 +211,55 @@ function rankSetores(registros, setoresAtivos) {
   return [...map.values()].sort(sortRanking);
 }
 
-function rankEmpresas(registros, empresasAtivas) {
-  const map = buildBaseRanking(empresasAtivas);
+async function rankEmpresas(empresasAtivas) {
+  const ids = empresasAtivas.map((empresa) => empresa.id).filter(Boolean);
 
-  registros.forEach((registro) => {
-    const key = normalizeText(registro.empresa);
-    const current = map.get(key);
+  if (ids.length === 0) return [];
 
-    if (!current) return;
-
-    const entrada = parseDate(registro.entrada);
-    const entradaTimestamp = entrada?.getTime() || 0;
-
-    current.visitas += 1;
-
-    if (entradaTimestamp && entradaTimestamp > (current.ultimoAcessoTimestamp || 0)) {
-      current.ultimoAcessoTimestamp = entradaTimestamp;
-      current.ultimoAcesso = entrada.toISOString();
-    }
+  const empresas = await prisma.empresas.findMany({
+    where: { id: { in: ids } },
+    include: {
+      usuarios: {
+        where: {
+          funcionarios: {
+            none: {},
+          },
+        },
+        select: {
+          id: true,
+          logs: {
+            where: {
+              dataDeEntrada: {
+                not: null,
+              },
+            },
+            orderBy: [{ dataDeEntrada: "desc" }, { id: "desc" }],
+            take: 1,
+            select: {
+              dataDeEntrada: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  return [...map.values()]
+  return empresas
+    .map((empresa) => {
+      const ultimoAcesso = empresa.usuarios
+        .flatMap((usuario) => usuario.logs || [])
+        .map((log) => parseDate(log.dataDeEntrada))
+        .filter(Boolean)
+        .sort((a, b) => b - a)[0];
+
+      return {
+        nome: empresa.nome,
+        visitantes: empresa.usuarios.length,
+        visitas: empresa.usuarios.length,
+        ultimoAcessoTimestamp: ultimoAcesso?.getTime() || 0,
+        ultimoAcesso: ultimoAcesso ? ultimoAcesso.toISOString() : null,
+      };
+    })
     .sort((a, b) => {
       const visitasDiff = b.visitas - a.visitas;
       if (visitasDiff !== 0) return visitasDiff;
@@ -244,6 +272,7 @@ function rankEmpresas(registros, empresasAtivas) {
     .map((item) => ({
       nome: item.nome,
       visitas: item.visitas,
+      visitantes: item.visitantes,
       ultimoAcesso: item.ultimoAcesso || null,
     }));
 }
@@ -418,7 +447,7 @@ class RelatoriosController {
           orderBy: { nome: "asc" },
         }),
         prisma.empresas.findMany({
-          select: { nome: true, status: true },
+          select: { id: true, nome: true, status: true },
           orderBy: { nome: "asc" },
         }),
       ]);
@@ -445,7 +474,7 @@ class RelatoriosController {
           },
           rankings: {
             setores: rankSetores(registros, setoresAtivos),
-            empresas: rankEmpresas(registros, empresasAtivas),
+            empresas: await rankEmpresas(empresasAtivas),
             status: statusDistribution(registros),
             tipos: distribution(registros, "tipo", {}, TIPO_COLOR),
           },

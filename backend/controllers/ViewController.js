@@ -26,15 +26,22 @@ class ViewController {
                     u.nome AS usuario_nome,
                     u.cpf AS usuario_cpf,
                     disp.local AS local_dispositivo,
+                    disp."idSetor" AS id_setor,
+                    sdisp.nome AS setor_dispositivo,
                     l."dataDeEntrada",
                     l."dataDeSaida",
-                    d.nome AS departamento_usuario
+                    COALESCE(sdisp.nome, d.nome, disp.local) AS departamento_usuario,
+                    CASE WHEN f.id IS NULL THEN 'Visitante' ELSE 'Funcionário' END AS tipo_usuario
                 FROM
                     logs l
                     JOIN usuarios u ON l."idUsuario" = u.id
                     JOIN dispositivos disp ON l."idDispositivo" = disp.id
+                    LEFT JOIN setores sdisp ON disp."idSetor" = sdisp.id
                     LEFT JOIN funcionarios f ON u.id = f."idUsuario"
                     LEFT JOIN setores d ON f."idSetor" = d.id
+                ORDER BY
+                    COALESCE(l."dataDeSaida", l."dataDeEntrada") DESC NULLS LAST,
+                    l.id DESC
             `;
             const data = await prisma.$queryRawUnsafe(query);
             return res.status(200).json({ sucesso: true, data });
