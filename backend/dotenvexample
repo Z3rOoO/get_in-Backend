@@ -1,6 +1,7 @@
 # API
 PORT=8080
 NODE_ENV=development
+# Em producao emergencial, use CORS_ORIGINS=*; depois restrinja ao dominio do front.
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 # PostgreSQL / Prisma

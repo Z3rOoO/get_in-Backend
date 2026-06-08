@@ -103,6 +103,8 @@ Crie um arquivo `.env` dentro da pasta `backend/`. O repositório mantém arquiv
 
 ```env
 PORT=8080
+NODE_ENV="development"
+CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
 DATABASE_URL="postgresql://usuario:senha@localhost:5432/get_in_db?schema=public"
 JWT_SECRET="segredo_muito_dificil"
 JWT_EXPIRES_IN="9h"
@@ -111,6 +113,8 @@ JWT_EXPIRES_IN="9h"
 SUPABASE_URL="https://seu-projeto.supabase.co"
 SUPABASE_KEY="sua_chave_do_supabase"
 ```
+
+> **Deploy Render:** em producao emergencial, configure `CORS_ORIGINS="*"` no painel do Render para liberar o start. Depois que o dominio publico do front estiver definido, troque `*` pela lista restrita de origens do front.
 
 > **Observação:** a configuração ativa do Prisma utiliza `DATABASE_URL` com provider `postgresql`, conforme definido em `backend/prisma/schema.prisma`, `backend/prisma.config.ts` e `backend/config/prisma.js`. Variáveis antigas como `DB_HOST`, `DB_USER` e `DB_NAME` não são utilizadas pelo backend atual.
 

@@ -6,6 +6,7 @@ const DEFAULT_DEV_CORS_ORIGINS = [
   "http://localhost:3001",
   "http://127.0.0.1:3001",
 ];
+const DEFAULT_PRODUCTION_CORS_ORIGINS = ["*"];
 
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -50,7 +51,12 @@ export const env = {
   supabaseKey: clean(process.env.SUPABASE_KEY),
   supabaseBucketName,
   supabasePublicBaseUrl,
-  corsOrigins: corsOrigins.length > 0 ? corsOrigins : DEFAULT_DEV_CORS_ORIGINS,
+  corsOrigins:
+    corsOrigins.length > 0
+      ? corsOrigins
+      : isProduction
+        ? DEFAULT_PRODUCTION_CORS_ORIGINS
+        : DEFAULT_DEV_CORS_ORIGINS,
   mqttBrokerUrl: clean(process.env.MQTT_BROKER_URL) || "mqtt://broker.hivemq.com",
   mqttResponseTopic: clean(process.env.MQTT_RESPONSE_TOPIC) || "get-in-3td/dispositivos/res",
   mqttCommandTopicPrefix:
@@ -64,10 +70,6 @@ export function requireEnv(name) {
 export function validateEnv() {
   const required = ["DATABASE_URL", "JWT_SECRET", "SUPABASE_URL", "SUPABASE_KEY"];
   const missing = required.filter((name) => !clean(process.env[name]));
-
-  if (isProduction && corsOrigins.length === 0) {
-    missing.push("CORS_ORIGINS");
-  }
 
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
