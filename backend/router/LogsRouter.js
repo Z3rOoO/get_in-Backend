@@ -5,9 +5,9 @@ import LogsController from '../controllers/LogsController.js';
 const router = express.Router();
 
 router.get('/', Auth, LogsController.Read);
-router.get('/:id', Auth, LogsController.ReadById);
 router.get('/user/:idUsuario', Auth, LogsController.ReadByUser);
 router.get('/device/:idDispositivo', Auth, LogsController.ReadByDevice);
+router.get('/:id', Auth, LogsController.ReadById);
 router.post('/', Auth, LogsController.Create);
 router.post('/disp', LogsController.dispLog);
 router.put('/:id', Auth, LogsController.Update);

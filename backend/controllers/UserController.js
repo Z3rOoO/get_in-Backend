@@ -1,8 +1,9 @@
 import { prisma } from "../config/prisma.js";
 import { comparePassword, hashPassword } from "../config/utils.js";
+import { env } from "../config/env.js";
 import { ensureUserCracha } from "../services/crachaService.js";
 
-const AVATAR_PUBLIC_URL = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+const AVATAR_PUBLIC_URL = env.supabasePublicBaseUrl;
 
 function hasValue(value) {
     return value !== undefined && value !== null && String(value).trim() !== "";

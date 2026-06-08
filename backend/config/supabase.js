@@ -1,11 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
+import { env, requireEnv } from './env.js';
 
-dotenv.config();
+const supabaseUrl = requireEnv("SUPABASE_URL");
+const supabaseKey = requireEnv("SUPABASE_KEY");
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+export const BUCKET_NAME = env.supabaseBucketName;
+export const SUPABASE_PUBLIC_BASE_URL = env.supabasePublicBaseUrl;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
-
-export const BUCKET_NAME = 'usuarios';

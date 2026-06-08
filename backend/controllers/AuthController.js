@@ -1,20 +1,34 @@
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
 import { prisma } from '../config/prisma.js';
 import { comparePassword, hashPassword } from '../config/utils.js';
+import { env } from '../config/env.js';
+import { errorResponse } from '../config/http.js';
 import { ensureUserCracha } from '../services/crachaService.js';
 
-dotenv.config()
-
-const AVATAR_PUBLIC_URL = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+const AVATAR_PUBLIC_URL = env.supabasePublicBaseUrl;
+const INVALID_LOGIN_MESSAGE = "Email ou senha incorretos";
 
 function getAvatarUrl(path) {
     return path ? `${AVATAR_PUBLIC_URL}/${path}` : null;
 }
 
+function maskLoginFailureMessages(res) {
+    const json = res.json.bind(res);
+
+    res.json = (body) => {
+        if (res.statusCode === 401 && body && typeof body === "object") {
+            return json({ ...body, mensagem: INVALID_LOGIN_MESSAGE });
+        }
+
+        return json(body);
+    };
+}
+
 class AuthController {
 
     static async login(req, res) {
+        maskLoginFailureMessages(res);
+
         try {
             const { email, senha } = req.body
 
@@ -59,8 +73,8 @@ class AuthController {
             // gera token
             const token = jwt.sign(
                 { id: user.id, email: user.email },
-                process.env.JWT_SECRET,
-                { expiresIn: process.env.JWT_EXPIRES_IN }
+                env.jwtSecret,
+                { expiresIn: env.jwtExpiresIn }
             )
 
             const { senhaHash, ...funcionarioSeguro } = func
@@ -82,11 +96,7 @@ class AuthController {
             })
 
         } catch (e) {
-            return res.status(500).json({
-                sucesso: false,
-                mensagem: "Erro ao realizar login",
-                erro: e.message
-            })
+            return errorResponse(res, 500, "Erro ao realizar login", e)
         }
     }
     static async register(req, res) {

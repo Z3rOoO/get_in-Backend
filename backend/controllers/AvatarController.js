@@ -1,7 +1,7 @@
 import { prisma } from "../config/prisma.js";
-import { supabase, BUCKET_NAME } from "../config/supabase.js";
+import { supabase, BUCKET_NAME, SUPABASE_PUBLIC_BASE_URL } from "../config/supabase.js";
 
-const url = "https://dmlshwvpsoqpptjmplfq.supabase.co/storage/v1/object/public/usuarios";
+const url = SUPABASE_PUBLIC_BASE_URL;
 
 class AvatarController {
     /**

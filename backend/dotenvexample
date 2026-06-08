@@ -1,14 +1,22 @@
-# Porta da API
+# API
 PORT=8080
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
-# URL de conexão PostgreSQL usada pelo Prisma
-# Ajuste usuário, senha, host, porta e database conforme seu ambiente.
+# PostgreSQL / Prisma
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/techrent_db
 
-# Configuração JWT
+# JWT
 JWT_SECRET=segredo_muito_dificil
 JWT_EXPIRES_IN=9h
 
-# Supabase Configuration
-SUPABASE_URL=https://dmlshwvpsoqpptjmplfq.supabase.co
-SUPABASE_KEY=sb_publishable_J8uOG_z3u9VcYhpingUgBw_SihCdLve
+# Supabase Storage
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_KEY=sua_chave_do_supabase
+SUPABASE_BUCKET_NAME=usuarios
+SUPABASE_PUBLIC_BASE_URL=https://seu-projeto.supabase.co/storage/v1/object/public/usuarios
+
+# MQTT
+MQTT_BROKER_URL=mqtt://broker.hivemq.com
+MQTT_RESPONSE_TOPIC=get-in-3td/dispositivos/res
+MQTT_COMMAND_TOPIC_PREFIX=get-in-3td/dispositivos

@@ -1,16 +1,39 @@
 import express from "express";
 import cors from "cors";
 import { connectMQTT } from "./config/mqtt.js"
+import { env, validateEnv } from "./config/env.js";
 
+validateEnv();
 
 const app = express();
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'options'],
+    origin(origin, callback) {
+        if (!origin || env.corsOrigins.includes("*") || env.corsOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(null, false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+    const json = res.json.bind(res);
+
+    res.json = (body) => {
+        if (env.isProduction && res.statusCode >= 500 && body && typeof body === "object" && "erro" in body) {
+            const { erro, ...safeBody } = body;
+            return json(safeBody);
+        }
+
+        return json(body);
+    };
+
+    next();
+});
 
 connectMQTT()
 
@@ -65,7 +88,7 @@ app.get("/health", (req, res) => {
 
 // inicializações do server//
 
-const PORT = process.env.PORT || 3000;
+const PORT = env.port;
 
 app.listen(PORT, () => {
     console.log(`Server rodando em: http://localhost:${PORT}`);
