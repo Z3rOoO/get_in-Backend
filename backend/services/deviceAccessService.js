@@ -88,18 +88,7 @@ export async function verifyDeviceAccess({ id, cracha, publish, client = prisma 
 
   if (deviceId != 10) {
     if (!tag) {
-      publishToDevice(publish, deviceId, "true/ CRACHA INVALIDO");
-
-      await client.tag.create({
-        data: {
-          codigoTag,
-          idUsuario: null,
-          idCracha: null,
-          status: "disponivel",
-          fisica: true,
-        },
-      });
-
+      publishToDevice(publish, deviceId, "false/ CRACHA INVALIDO");
       return response(201, true, "CRACHA INVALIDO");
     }
   }
