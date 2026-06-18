@@ -56,7 +56,7 @@ export async function verifyDeviceAccess({ id, cracha, publish, client = prisma 
   });
 
   if (!dispositivo) {
-    publishToDevice(publish, deviceId, "false/ERRO, DISPOSITIVO NAO VINCULADO");
+    publishToDevice(publish, deviceId, "false/DP NAO VINCULADO");
     return response(404, false, "ERRO, DISPOSITIVO NAO VINCULADO");
   }
 
@@ -66,24 +66,47 @@ export async function verifyDeviceAccess({ id, cracha, publish, client = prisma 
     },
   });
 
-  if (!tag) {
-    publishToDevice(publish, deviceId, "true/CRACHA CADASTRADO NO SISTEMA");
+  if (deviceId == 10) {
 
-    await client.tag.create({
-      data: {
-        codigoTag,
-        idUsuario: null,
-        idCracha: null,
-        status: "disponivel",
-        fisica: true,
-      },
-    });
+    if (!tag) {
+      publishToDevice(publish, deviceId, "true/ CRACHA  CRIADO ");
 
-    return response(201, true, "CRACHA CADASTRADO NO SISTEMA");
+      await client.tag.create({
+        data: {
+          codigoTag,
+          idUsuario: null,
+          idCracha: null,
+          status: "disponivel",
+          fisica: true,
+        },
+      });
+
+      return response(201, true, "CRACHA CADASTRADO NO SISTEMA");
+    }
+
   }
 
+  if (deviceId != 10) {
+    if (!tag) {
+      publishToDevice(publish, deviceId, "true/ CRACHA INVALIDO");
+
+      await client.tag.create({
+        data: {
+          codigoTag,
+          idUsuario: null,
+          idCracha: null,
+          status: "disponivel",
+          fisica: true,
+        },
+      });
+
+      return response(201, true, "CRACHA INVALIDO");
+    }
+  }
+
+
   if (tag.idUsuario == null) {
-    publishToDevice(publish, deviceId, "false/NENHUM USUARIO VINCULADO AO CRACHA");
+    publishToDevice(publish, deviceId, "false/NENHUM USU.CRACHA");
     return response(404, false, "NENHUM USUARIO VINCULADO AO CRACHA");
   }
 
@@ -94,17 +117,17 @@ export async function verifyDeviceAccess({ id, cracha, publish, client = prisma 
   });
 
   if (!setor) {
-    publishToDevice(publish, deviceId, "false/SETOR NAO VINCULADO");
+    publishToDevice(publish, deviceId, "false/SETOR N VINCULADO");
     return response(404, false, "SETOR NAO VINCULADO", { mesagem: "SETOR NAO VINCULADO" });
   }
 
   if (setor.status === "Inativo") {
-    publishToDevice(publish, deviceId, "aguarde/SETOR INATIVO");
+    publishToDevice(publish, deviceId, "aguarde/ SETOR INATIVO ");
     return response(200, true, "SETOR INATIVO", { mesagem: "SETOR INATIVO" });
   }
 
   if (setor.acesso === "Bloqueado") {
-    publishToDevice(publish, deviceId, "aguarde/SETOR BLOQUEADO");
+    publishToDevice(publish, deviceId, "aguarde/SETOR  BLOQUEADO");
     return response(200, true, "SETOR BLOQUEADO", { mesagem: "SETOR BLOQUEADO" });
   }
 
@@ -141,15 +164,15 @@ export async function verifyDeviceAccess({ id, cracha, publish, client = prisma 
   }
 
   if (requisicao?.status === "recusado") {
-    publishToDevice(publish, deviceId, "false/ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR");
+    publishToDevice(publish, deviceId, "false/RECUSADO POR SUP");
     return response(200, false, "ACESSO AO DEPARTAMENTO RECUSADO PELO SUPERVISOR");
   }
 
   if (requisicao?.status === "pendente") {
-    publishToDevice(publish, deviceId, "aguarde/AGUARDANDO VERIFICACAO DO SUPERVISOR");
+    publishToDevice(publish, deviceId, "aguarde/AGUARD.VERIF.SUP");
     return response(200, false, "AGUARDANDO VERIFICACAO DO SUPERVISOR");
   }
 
-  publishToDevice(publish, deviceId, "false/ACESSO NEGADO");
+  publishToDevice(publish, deviceId, "false/ ACESSO NEGADO  ");
   return response(404, false, "ACESSO NEGADO");
 }
